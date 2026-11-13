@@ -21,6 +21,14 @@ import CandidateApplicationsPage from '@/pages/candidate/CandidateApplicationsPa
 import RecommendationsPage from '@/pages/candidate/RecommendationsPage.vue';
 import NotificationsPage from '@/pages/candidate/NotificationsPage.vue';
 
+// Company Pages (P-COM-01..07)
+import CompanyProfilePage from '@/pages/company/CompanyProfilePage.vue';
+import CompanyJobsPage from '@/pages/company/CompanyJobsPage.vue';
+import CompanyJobEditorPage from '@/pages/company/CompanyJobEditorPage.vue';
+import CompanyJobDetailPage from '@/pages/company/CompanyJobDetailPage.vue';
+import CompanyApplicantsPage from '@/pages/company/CompanyApplicantsPage.vue';
+import CompanyApplicationDetailPage from '@/pages/company/CompanyApplicationDetailPage.vue';
+
 const routes = [
   // --- PUBLIC ROUTES ---
   {
@@ -99,6 +107,56 @@ const routes = [
       {
         path: 'notifications',
         name: 'candidate-notifications',
+        component: NotificationsPage,
+      },
+    ],
+  },
+
+  // --- COMPANY ROUTES (P-COM-01..07) ---
+  {
+    path: '/company',
+    component: CompanyLayout,
+    meta: { requiresAuth: true, roles: ['company'] },
+    children: [
+      { path: '', redirect: '/company/jobs' },
+      {
+        path: 'profile',
+        name: 'company-profile',
+        component: CompanyProfilePage,
+      },
+      {
+        path: 'jobs',
+        name: 'company-jobs',
+        component: CompanyJobsPage,
+      },
+      {
+        path: 'jobs/new',
+        name: 'company-job-create',
+        component: CompanyJobEditorPage,
+      },
+      {
+        path: 'jobs/:jobId',
+        name: 'company-job-detail',
+        component: CompanyJobDetailPage,
+      },
+      {
+        path: 'jobs/:jobId/edit',
+        name: 'company-job-edit',
+        component: CompanyJobEditorPage,
+      },
+      {
+        path: 'jobs/:jobId/applications',
+        name: 'company-job-applicants',
+        component: CompanyApplicantsPage,
+      },
+      {
+        path: 'applications/:id',
+        name: 'company-application-detail',
+        component: CompanyApplicationDetailPage,
+      },
+      {
+        path: 'notifications',
+        name: 'company-notifications',
         component: NotificationsPage,
       },
     ],

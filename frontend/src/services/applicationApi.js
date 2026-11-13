@@ -1,15 +1,38 @@
 import { apiClient } from './apiClient';
 
 export const applicationApi = {
-  // API-APP-01: Ứng viên nộp hồ sơ vào tin tuyển dụng
+  // Candidate methods
   apply: (jobId, data) => apiClient.request('POST', `/jobs/${jobId}/applications`, data),
-
-  // API-APP-02: Danh sách đơn ứng tuyển của ứng viên
   getMyApplications: (params = '') => apiClient.request('GET', `/candidate/applications${params ? `?${params}` : ''}`),
-
-  // API-APP-03: Chi tiết đơn ứng tuyển
   getApplication: (id) => apiClient.request('GET', `/candidate/applications/${id}`),
-
-  // API-APP-04: Rút đơn ứng tuyển
   withdraw: (id) => apiClient.request('POST', `/candidate/applications/${id}/withdraw`),
+
+  // Company methods
+  // API-APP-05: Danh sách đơn theo việc làm
+  getCompanyApplications: (jobId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiClient.request('GET', `/company/jobs/${jobId}/applications${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // API-APP-06: Chi tiết đơn ứng tuyển phía công ty
+  getCompanyApplicationDetail: (id) => apiClient.request('GET', `/company/applications/${id}`),
+
+  // API-APP-08: Thay đổi trạng thái đơn
+  changeStatus: (id, payload) => apiClient.request('PATCH', `/company/applications/${id}/status`, payload),
+
+  // API-APP-07: Download CV private stream
+  downloadCv: async (id) => {
+    const url = `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/company/applications/${id}/cv`;
+    const response = await fetch(url, {
+      credentials: 'include',
+      headers: {
+        Accept: 'application/pdf',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Không thể tải CV hoặc không có quyền truy cập.');
+    }
+    const blob = await response.blob();
+    return window.URL.createObjectURL(blob);
+  },
 };
