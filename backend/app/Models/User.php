@@ -23,4 +23,20 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function candidateProfile()
+    {
+        return $this->hasOne(CandidateProfile::class);
+    }
+
+    public function company()
+    {
+        return $this->hasOne(Company::class);
+    }
+
+    // Accessor cho full_name tương thích cả name và full_name
+    public function getFullNameAttribute(): string
+    {
+        return $this->attributes['name'] ?? '';
+    }
 }

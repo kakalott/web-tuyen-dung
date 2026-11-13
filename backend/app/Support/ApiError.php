@@ -39,6 +39,17 @@ class ApiError
             $message = 'Dữ liệu đầu vào không hợp lệ.';
             $fields = $exception->errors();
             $statusCode = 422;
+
+            return response()->json([
+                'message' => $message,
+                'errors' => $fields,
+                'error' => [
+                    'code' => $code,
+                    'message' => $message,
+                    'fields' => $fields,
+                ],
+                'request_id' => 'req_' . Str::uuid()->toString(),
+            ], $statusCode);
         } elseif ($exception instanceof DomainConflictException) {
             $code = 'STATE_CONFLICT';
             $message = $exception->getMessage();
