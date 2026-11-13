@@ -53,8 +53,14 @@ export const apiClient = {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 401 && !endpoint.startsWith('/auth/login')) {
+        // Phát sự kiện để authStore reset session và router đẩy về /login
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+
       throw {
         status: response.status,
+        request_id: data?.request_id || null,
         ...(data?.error || { code: 'UNKNOWN', message: 'Đã xảy ra lỗi không xác định.' }),
       };
     }
@@ -73,9 +79,14 @@ export const apiClient = {
 
     // Nếu server trả lỗi (401, 403, 404, 502), response sẽ là JSON envelope
     if (!response.ok) {
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+
       const errData = await response.json().catch(() => null);
       throw {
         status: response.status,
+        request_id: errData?.request_id || null,
         ...(errData?.error || {
           code: 'DOWNLOAD_FAILED',
           message: 'Không thể tải tệp CV hoặc bạn không có quyền truy cập.',

@@ -16,7 +16,7 @@
           <span class="metric-value">
             {{ matchResult?.skill_coverage !== null && matchResult?.skill_coverage !== undefined
               ? `${formatNum(matchResult.skill_coverage * 100)}%`
-              : 'Không áp dụng' }}
+              : 'Không áp dụng (JD không yêu cầu kỹ năng bắt buộc — tính 100% ngữ nghĩa)' }}
           </span>
         </div>
       </div>
@@ -27,7 +27,7 @@
       <div class="skill-group matched">
         <h4>Kỹ năng phù hợp (Matched):</h4>
         <div class="pills-list">
-          <span v-for="s in matchedSkills" :key="s" class="pill pill-matched">{{ s }}</span>
+          <span v-for="(s, idx) in matchedSkills" :key="idx" class="pill pill-matched">{{ skillName(s) }}</span>
           <span v-if="!matchedSkills.length" class="empty-pill">Không có</span>
         </div>
       </div>
@@ -35,7 +35,7 @@
       <div class="skill-group missing">
         <h4>Kỹ năng còn thiếu (Missing):</h4>
         <div class="pills-list">
-          <span v-for="s in missingSkills" :key="s" class="pill pill-missing">{{ s }}</span>
+          <span v-for="(s, idx) in missingSkills" :key="idx" class="pill pill-missing">{{ skillName(s) }}</span>
           <span v-if="!missingSkills.length" class="empty-pill">Không có</span>
         </div>
       </div>
@@ -56,6 +56,12 @@ const props = defineProps({
 const formatNum = (val) => {
   if (val === null || val === undefined) return '0';
   return Math.round(Number(val) * 10) / 10;
+};
+
+const skillName = (s) => {
+  if (!s) return '';
+  if (typeof s === 'object') return s.name || `Kỹ năng #${s.id}`;
+  return s;
 };
 
 const matchedSkills = computed(() => {

@@ -54,7 +54,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['status-updated']);
+const emit = defineEmits(['status-updated', 'refresh']);
 
 const newStatus = ref('');
 const submitting = ref(false);
@@ -101,7 +101,12 @@ const handleSubmit = async () => {
     newStatus.value = '';
     emit('status-updated', updated);
   } catch (err) {
-    error.value = err.message || 'Không thể cập nhật trạng thái đơn.';
+    if (err.status === 409 || err.code === 'STATE_CONFLICT') {
+      error.value = 'Dữ liệu đơn ứng tuyển đã bị thay đổi trên máy chủ (Xung đột trạng thái). Đang cập nhật dữ liệu mới nhất...';
+      emit('refresh');
+    } else {
+      error.value = err.message || 'Không thể cập nhật trạng thái đơn.';
+    }
   } finally {
     submitting.value = false;
   }

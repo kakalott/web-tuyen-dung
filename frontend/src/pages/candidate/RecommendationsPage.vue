@@ -22,7 +22,12 @@
 
     <!-- Results -->
     <div v-if="loading" class="state-panel loading">🤖 AI đang tính toán Match Score...</div>
-    <div v-else-if="fetchError" class="state-panel error">{{ fetchError }}</div>
+    <div v-else-if="fetchError" class="state-panel error">
+      <p class="error-msg">{{ fetchError }}</p>
+      <button v-if="isAiError" @click="fetchRecommendations" class="btn-retry">
+        🔄 Thử lại
+      </button>
+    </div>
     <div v-else-if="selectedCvId && !jobs.length && hasFetched" class="state-panel empty">
       Không tìm thấy công việc phù hợp với CV đã chọn.
     </div>
@@ -34,11 +39,11 @@
           <p class="result-company">{{ job.company_name }}</p>
           <div class="skill-row">
             <span class="skill-label matched">Kỹ năng khớp:</span>
-            <span class="skill-list matched">{{ (job.matched_skills || []).join(', ') || 'Không có' }}</span>
+            <span class="skill-list matched">{{ formatSkills(job.matched_skills) }}</span>
           </div>
           <div class="skill-row">
             <span class="skill-label missing">Kỹ năng thiếu:</span>
-            <span class="skill-list missing">{{ (job.missing_skills || []).join(', ') || 'Không có' }}</span>
+            <span class="skill-list missing">{{ formatSkills(job.missing_skills) }}</span>
           </div>
         </div>
         <div class="result-score">
@@ -72,6 +77,7 @@ const jobs = ref([]);
 const loading = ref(false);
 const cvLoading = ref(true);
 const fetchError = ref('');
+const isAiError = ref(false);
 const hasFetched = ref(false);
 
 onMounted(async () => {
@@ -92,12 +98,18 @@ const fetchRecommendations = async () => {
   if (!selectedCvId.value) return;
   loading.value = true;
   fetchError.value = '';
+  isAiError.value = false;
   hasFetched.value = false;
   try {
     const res = await recommendationApi.getRecommendations(selectedCvId.value);
     jobs.value = res.data || [];
   } catch (err) {
-    fetchError.value = err.message || 'Không thể tải gợi ý.';
+    if (err.status === 502 || err.code === 'AI_SERVICE_ERROR') {
+      isAiError.value = true;
+      fetchError.value = 'Dịch vụ AI đang tạm thời gián đoạn. Vui lòng thử lại sau giây lát.';
+    } else {
+      fetchError.value = err.message || 'Không thể tải gợi ý việc làm.';
+    }
     jobs.value = [];
   } finally {
     loading.value = false;
@@ -105,9 +117,17 @@ const fetchRecommendations = async () => {
   }
 };
 
+const formatSkills = (skillList) => {
+  if (!Array.isArray(skillList) || !skillList.length) return 'Không có';
+  return skillList
+    .map((s) => (typeof s === 'object' && s !== null ? s.name || s.id : s))
+    .filter(Boolean)
+    .join(', ') || 'Không có';
+};
+
 const formatScore = (v) => {
   if (v === null || v === undefined) return '—';
-  return Math.round(v * 100) / 100;
+  return Math.round(v * 10) / 10;
 };
 </script>
 
@@ -140,5 +160,8 @@ const formatScore = (v) => {
 .state-panel { padding: 2rem; text-align: center; border-radius: 0.5rem; }
 .state-panel.loading { color: #2563eb; background: #eff6ff; }
 .state-panel.error { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
+.error-msg { margin-bottom: 0.75rem; font-weight: 500; }
+.btn-retry { background: #dc2626; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-weight: 500; font-size: 0.875rem; }
+.btn-retry:hover { background: #b91c1c; }
 .state-panel.empty { color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; }
 </style>

@@ -56,9 +56,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import { notificationApi } from '@/services/notificationApi';
+import { resolveNotificationRoute } from '@/utils/notificationRouter';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const notifications = ref([]);
 const loading = ref(true);
 const error = ref('');
@@ -100,13 +103,10 @@ const handleClick = async (noti) => {
     }
   }
 
-  // Điều hướng an toàn dựa trên related_type
-  if (noti.related_type === 'job' && noti.related_id) {
-    router.push(`/jobs/${noti.related_id}`);
-  } else if (noti.related_type === 'application' && noti.related_id) {
-    router.push(`/candidate/applications`);
-  } else if (noti.related_type === 'interview' && noti.related_id) {
-    router.push('/candidate/applications');
+  // Điều hướng an toàn dựa trên related_type qua Whitelist
+  const targetRoute = resolveNotificationRoute(noti, authStore.user?.role || 'candidate');
+  if (targetRoute) {
+    router.push(targetRoute);
   }
 };
 

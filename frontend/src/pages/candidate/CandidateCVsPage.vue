@@ -118,7 +118,11 @@ const handleUpload = async () => {
     if (fileInput.value) fileInput.value.value = '';
     await loadCvs();
   } catch (err) {
-    uploadError.value = err.message || 'Upload thất bại.';
+    if (err.status === 502 || err.code === 'AI_SERVICE_ERROR') {
+      uploadError.value = 'Dịch vụ AI trích xuất tạm thời gián đoạn (502). Vui lòng bấm Upload để thử lại.';
+    } else {
+      uploadError.value = err.message || 'Upload thất bại.';
+    }
   } finally {
     uploading.value = false;
   }

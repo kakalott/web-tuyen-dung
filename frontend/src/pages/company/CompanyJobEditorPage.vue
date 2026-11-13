@@ -20,8 +20,10 @@
             v-model="form.title"
             required
             class="input-field"
+            :class="{ 'input-error': formErrors.title }"
             placeholder="Ví dụ: Senior Backend Laravel Engineer"
           />
+          <span v-if="formErrors.title" class="field-error">{{ formErrors.title }}</span>
         </div>
 
         <div class="form-row">
@@ -77,8 +79,10 @@
             rows="6"
             required
             class="input-field"
+            :class="{ 'input-error': formErrors.description }"
             placeholder="Mô tả trách nhiệm, nhiệm vụ hàng ngày..."
           ></textarea>
+          <span v-if="formErrors.description" class="field-error">{{ formErrors.description }}</span>
         </div>
 
         <div class="form-group">
@@ -88,8 +92,10 @@
             rows="6"
             required
             class="input-field"
+            :class="{ 'input-error': formErrors.requirements_text }"
             placeholder="Yêu cầu về kinh nghiệm, kỹ năng, thái độ..."
           ></textarea>
+          <span v-if="formErrors.requirements_text" class="field-error">{{ formErrors.requirements_text }}</span>
         </div>
       </div>
 
@@ -150,10 +156,12 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { jobApi } from '@/services/jobApi';
 import { apiClient } from '@/services/apiClient';
+import { useFormErrors } from '@/composables/useFormErrors';
 import SkillSelector from '@/components/common/SkillSelector.vue';
 
 const route = useRoute();
 const router = useRouter();
+const { errors: formErrors, fromApi422, clearErrors } = useFormErrors();
 
 const isEditMode = computed(() => !!route.params.jobId);
 const originalStatus = ref('');
@@ -248,6 +256,7 @@ const promptWarningBeforeSubmit = () => {
 
 const submitJobForm = async () => {
   showWarningModal.value = false;
+  clearErrors();
   submitting.value = true;
   try {
     const payload = {
@@ -264,7 +273,11 @@ const submitJobForm = async () => {
     }
     router.push('/company/jobs');
   } catch (err) {
-    alert('Lưu tin thất bại: ' + (err.message || 'Dữ liệu không hợp lệ.'));
+    if (err.status === 422 && err.fields) {
+      fromApi422(err.fields);
+    } else {
+      alert('Lưu tin thất bại: ' + (err.message || 'Dữ liệu không hợp lệ.'));
+    }
   } finally {
     submitting.value = false;
   }
@@ -355,6 +368,16 @@ const submitJobForm = async () => {
 .input-field:focus {
   border-color: #0284c7;
   box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1);
+}
+
+.input-field.input-error {
+  border-color: #dc2626 !important;
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
 }
 
 .form-row {

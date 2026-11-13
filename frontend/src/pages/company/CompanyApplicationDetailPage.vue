@@ -58,6 +58,7 @@
             :current-status="application.status"
             :application-id="application.id"
             @status-updated="handleStatusUpdated"
+            @refresh="loadData"
           />
         </div>
       </div>
