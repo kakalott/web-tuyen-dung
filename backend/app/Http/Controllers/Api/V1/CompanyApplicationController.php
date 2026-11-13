@@ -38,12 +38,11 @@ class CompanyApplicationController extends Controller
             'candidate_name' => $app->candidateProfile?->user?->name,
             'status'         => $app->status,
             'applied_at'     => $app->applied_at?->toIso8601String(),
-            'match_score'    => $app->latestMatchResult && !$app->latestMatchResult->is_stale
-                ? $app->latestMatchResult->match_score
+            'match_score'    => $app->latestMatchResult ? (float) $app->latestMatchResult->match_score : null,
+            'skill_coverage' => $app->latestMatchResult?->skill_coverage !== null
+                ? (float) $app->latestMatchResult->skill_coverage
                 : null,
-            'score_stale'    => $app->latestMatchResult
-                ? (bool) $app->latestMatchResult->is_stale
-                : false,
+            'score_stale'    => (bool) ($app->score_stale ?? false),
         ])->values();
 
         return response()->json([

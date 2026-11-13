@@ -167,15 +167,20 @@ class MatchingTest extends TestCase
                 'data' => [
                     'items' => [
                         '*' => [
-                            'job' => ['id', 'title', 'company_name'],
-                            'match_result' => ['id', 'match_score', 'baseline_score', 'semantic_similarity', 'skill_coverage', 'matched_skills'],
+                            'job_id',
+                            'title',
+                            'company_name',
+                            'match_score',
+                            'baseline_score',
+                            'semantic_similarity',
+                            'skill_coverage',
+                            'matched_skills',
                             'score_stale',
                         ],
                     ],
                     'coverage_note',
                     'pagination' => ['page', 'page_size', 'total', 'total_pages'],
                 ],
-                'request_id',
             ]);
 
         $this->assertNotEmpty($res->json('data.items'));
@@ -204,8 +209,9 @@ class MatchingTest extends TestCase
 
         $res = $this->actingAs($candUser1, 'sanctum')->getJson("/api/v1/candidate/recommendations?cv_id={$cv2->id}");
 
-        $res->assertStatus(403)
-            ->assertJsonPath('error.code', 'FORBIDDEN');
+        $res->assertStatus(422)
+            ->assertJsonPath('error.code', 'VALIDATION_ERROR')
+            ->assertJsonPath('error.fields.cv_id.0', 'CV không tồn tại hoặc không thuộc quyền sở hữu của bạn.');
     }
 
     /**

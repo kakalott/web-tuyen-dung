@@ -9,49 +9,47 @@ class MatchResultResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $matchedSkills = [];
-        $missingSkills = [];
-        $matchedPrefSkills = [];
-        $missingPrefSkills = [];
+        $skillsCollection = $this->whenLoaded('matchResultSkills', fn () => $this->matchResultSkills, collect());
 
-        if ($this->relationLoaded('matchResultSkills')) {
-            foreach ($this->matchResultSkills as $item) {
-                $skillData = [
-                    'id'   => $item->skill?->id ?? $item->skill_id,
-                    'name' => $item->skill?->name ?? '',
-                ];
+        $matchedRequired = $skillsCollection
+            ->filter(fn ($item) => $item->requirement_type === 'required' && $item->match_status === 'matched')
+            ->map(fn ($item) => [
+                'id'   => $item->skill_id,
+                'name' => $item->relationLoaded('skill') ? $item->skill?->name : null,
+            ])
+            ->values();
 
-                if ($item->requirement_type === 'required') {
-                    if ($item->match_status === 'matched') {
-                        $matchedSkills[] = $skillData;
-                    } else {
-                        $missingSkills[] = $skillData;
-                    }
-                } else {
-                    if ($item->match_status === 'matched') {
-                        $matchedPrefSkills[] = $skillData;
-                    } else {
-                        $missingPrefSkills[] = $skillData;
-                    }
-                }
-            }
-        }
+        $missingRequired = $skillsCollection
+            ->filter(fn ($item) => $item->requirement_type === 'required' && $item->match_status === 'missing')
+            ->map(fn ($item) => [
+                'id'   => $item->skill_id,
+                'name' => $item->relationLoaded('skill') ? $item->skill?->name : null,
+            ])
+            ->values();
+
+        $matchedPreferred = $skillsCollection
+            ->filter(fn ($item) => $item->requirement_type === 'preferred' && $item->match_status === 'matched')
+            ->map(fn ($item) => [
+                'id'   => $item->skill_id,
+                'name' => $item->relationLoaded('skill') ? $item->skill?->name : null,
+            ])
+            ->values();
 
         return [
             'id'                     => $this->id,
-            'match_score'            => (float) $this->match_score,
             'baseline_score'         => (float) $this->baseline_score,
             'semantic_similarity'    => (float) $this->semantic_similarity,
             'skill_coverage'         => $this->skill_coverage !== null ? (float) $this->skill_coverage : null,
+            'match_score'            => (float) $this->match_score,
             'required_count'         => (int) $this->required_count,
             'matched_required_count' => (int) $this->matched_required_count,
-            'algorithm_version'      => $this->algorithm_version,
+            'matched_skills'         => $matchedRequired,
+            'missing_skills'         => $missingRequired,
+            'matched_preferred_skills' => $matchedPreferred,
             'model_name'             => $this->model_name,
-            'matched_skills'         => $matchedSkills,
-            'missing_skills'         => $missingSkills,
-            'matched_preferred_skills' => $matchedPrefSkills,
-            'missing_preferred_skills' => $missingPrefSkills,
+            'algorithm_version'      => $this->algorithm_version,
             'warnings'               => is_string($this->warnings) ? json_decode($this->warnings, true) : ($this->warnings ?? []),
+            'score_stale'            => (bool) ($this->score_stale ?? $this->is_stale ?? false),
             'computed_at'            => $this->computed_at?->toIso8601String(),
         ];
     }

@@ -87,13 +87,10 @@ class ApplicationResource extends JsonResource
             ])->values()),
 
             // Kết quả AI Matching tham khảo (nếu đã có)
-            'match_result' => $this->whenLoaded('latestMatchResult', fn () => $this->latestMatchResult ? [
-                'match_score'         => $this->latestMatchResult->match_score,
-                'baseline_score'      => $this->latestMatchResult->baseline_score,
-                'semantic_similarity' => $this->latestMatchResult->semantic_similarity,
-                'skill_coverage'      => $this->latestMatchResult->skill_coverage,
-                'score_stale'         => (bool) $this->latestMatchResult->is_stale,
-            ] : null),
+            'match_result' => $this->whenLoaded('latestMatchResult', fn () => $this->latestMatchResult
+                ? (new MatchResultResource($this->latestMatchResult))->resolve($request)
+                : null
+            ),
         ];
     }
 }

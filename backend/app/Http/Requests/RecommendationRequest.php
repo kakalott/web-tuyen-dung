@@ -2,73 +2,42 @@
 
 namespace App\Http\Requests;
 
-use App\Models\CandidateCV;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class RecommendationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() && $this->user()->role === 'candidate';
+        return $this->user() !== null
+            && $this->user()->role === 'candidate'
+            && $this->user()->candidateProfile !== null;
     }
 
     public function rules(): array
     {
+        $candidateProfileId = $this->user()?->candidateProfile?->id;
+
         return [
-            'cv_id'     => ['required', 'integer'],
+            'cv_id' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::exists('candidate_cvs', 'id')->where(function ($query) use ($candidateProfileId) {
+                    $query->where('candidate_profile_id', $candidateProfileId)
+                        ->whereNull('deleted_at');
+                }),
+            ],
             'page'      => ['nullable', 'integer', 'min:1'],
             'page_size' => ['nullable', 'integer', 'min:1', 'max:50'],
         ];
     }
 
-    public function withValidator(Validator $validator): void
+    public function messages(): array
     {
-        $validator->after(function ($validator) {
-            $cvId = $this->input('cv_id');
-            if (!$cvId) {
-                return;
-            }
-
-            $user = $this->user();
-            $profile = $user?->candidateProfile;
-
-            $cv = CandidateCV::whereNull('deleted_at')->find($cvId);
-            if (!$cv) {
-                $validator->errors()->add('cv_id', 'CV không tồn tại.');
-                return;
-            }
-
-            if (!$profile || (int) $cv->candidate_profile_id !== (int) $profile->id) {
-                // IDOR: CV không thuộc về ứng viên đang đăng nhập
-                throw new HttpResponseException(
-                    response()->json([
-                        'error' => [
-                            'code'    => 'FORBIDDEN',
-                            'message' => 'Bạn không có quyền truy cập CV này.',
-                        ],
-                        'request_id' => request()->header('X-Request-Id', 'req_' . bin2hex(random_bytes(8))),
-                    ], 403)
-                );
-            }
-        });
-    }
-
-    protected function failedValidation(Validator $validator)
-    {
-        $errors = (new ValidationException($validator))->errors();
-
-        throw new HttpResponseException(
-            response()->json([
-                'error' => [
-                    'code'    => 'VALIDATION_ERROR',
-                    'message' => 'Dữ liệu không hợp lệ.',
-                    'fields'  => $errors,
-                ],
-                'request_id' => request()->header('X-Request-Id', 'req_' . bin2hex(random_bytes(8))),
-            ], 422)
-        );
+        return [
+            'cv_id.required' => 'Vui lòng chọn CV đã xác nhận để nhận gợi ý việc làm.',
+            'cv_id.exists'   => 'CV không tồn tại hoặc không thuộc quyền sở hữu của bạn.',
+        ];
     }
 }
