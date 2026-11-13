@@ -2,23 +2,59 @@ import { apiClient } from './apiClient';
 
 export const cvApi = {
   // API-CV-01: Danh sách CV của ứng viên
-  getCvs: () => apiClient.request('GET', '/candidate/cvs'),
+  getCvs(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return apiClient.request('GET', `/candidate/cvs${query ? `?${query}` : ''}`);
+  },
 
-  // API-CV-02: Upload CV mới (FormData với file PDF)
-  uploadCv: (formData) => apiClient.request('POST', '/candidate/cvs', formData),
+  list(params = {}) {
+    return this.getCvs(params);
+  },
+
+  // API-CV-02: Upload CV mới (FormData với trường 'file')
+  upload(file, signal = null) {
+    const formData = new FormData();
+    formData.append('file', file); // Khớp trường 'file' trong UploadCVRequest
+
+    return apiClient.request('POST', '/candidate/cvs', formData, { signal });
+  },
+
+  uploadCv(formData) {
+    // Tương thích ngược nếu nhận FormData trực tiếp
+    return apiClient.request('POST', '/candidate/cvs', formData);
+  },
 
   // API-CV-03: Xem chi tiết CV
-  getCv: (cvId) => apiClient.request('GET', `/candidate/cvs/${cvId}`),
+  getCv(cvId) {
+    return apiClient.request('GET', `/candidate/cvs/${cvId}`);
+  },
 
-  // API-CV-04: Tải file CV gốc (stream)
-  downloadCv: (cvId) => `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/candidate/cvs/${cvId}/file`,
+  // API-CV-04: Tải file CV gốc qua blob an toàn
+  downloadOwn(cvId) {
+    return apiClient.download(`/candidate/cvs/${cvId}/file`, `cv-${cvId}.pdf`);
+  },
+
+  downloadCv(cvId) {
+    return this.downloadOwn(cvId);
+  },
+
+  // Tải CV ứng viên cho công ty
+  downloadForApplication(applicationId) {
+    return apiClient.download(`/company/applications/${applicationId}/cv`, `application-${applicationId}-cv.pdf`);
+  },
 
   // API-CV-05: Xem kết quả trích xuất
-  getExtraction: (cvId) => apiClient.request('GET', `/candidate/cvs/${cvId}/extraction`),
+  getExtraction(cvId) {
+    return apiClient.request('GET', `/candidate/cvs/${cvId}/extraction`);
+  },
 
   // API-CV-06: Xác nhận trích xuất (Confirmed-CV Gate)
-  confirmExtraction: (cvId, data) => apiClient.request('PATCH', `/candidate/cvs/${cvId}/extraction`, data),
+  confirmExtraction(cvId, data) {
+    return apiClient.request('PATCH', `/candidate/cvs/${cvId}/extraction`, data);
+  },
 
   // API-CV-07: Thử trích xuất lại
-  retryExtraction: (cvId) => apiClient.request('POST', `/candidate/cvs/${cvId}/retry-extraction`),
+  retryExtraction(cvId) {
+    return apiClient.request('POST', `/candidate/cvs/${cvId}/retry-extraction`);
+  },
 };

@@ -29,8 +29,7 @@ const handleDownload = async () => {
   downloading.value = true;
   error.value = '';
   try {
-    const blobUrl = await applicationApi.downloadCv(props.applicationId);
-    window.open(blobUrl, '_blank');
+    await applicationApi.downloadCv(props.applicationId);
   } catch (err) {
     error.value = err.message || 'Không thể tải file CV.';
   } finally {

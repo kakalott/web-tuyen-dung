@@ -44,6 +44,13 @@
           </div>
         </div>
         <div class="cv-actions">
+          <button
+            @click="handleDownload(cv.id)"
+            class="btn-outline-sm mr-2"
+            title="Tải file PDF gốc"
+          >
+            Tải PDF
+          </button>
           <router-link
             v-if="cv.parse_status === 'processed'"
             :to="`/candidate/cvs/${cv.id}/extraction`"
@@ -106,9 +113,7 @@ const handleUpload = async () => {
   uploading.value = true;
   uploadError.value = '';
   try {
-    const formData = new FormData();
-    formData.append('cv_file', selectedFile.value);
-    await cvApi.uploadCv(formData);
+    await cvApi.upload(selectedFile.value);
     selectedFile.value = null;
     if (fileInput.value) fileInput.value.value = '';
     await loadCvs();
@@ -116,6 +121,14 @@ const handleUpload = async () => {
     uploadError.value = err.message || 'Upload thất bại.';
   } finally {
     uploading.value = false;
+  }
+};
+
+const handleDownload = async (cvId) => {
+  try {
+    await cvApi.downloadOwn(cvId);
+  } catch (err) {
+    alert(err.message || 'Không thể tải file CV.');
   }
 };
 
@@ -144,6 +157,9 @@ const formatDate = (d) => (d ? new Date(d).toLocaleDateString('vi-VN') : '');
 .hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem; }
 .btn-primary { background: #2563eb; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-outline-sm { background: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 0.25rem 0.6rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; }
+.btn-outline-sm:hover { background: #f1f5f9; }
+.mr-2 { margin-right: 0.5rem; }
 .btn-link { color: #2563eb; text-decoration: none; font-size: 0.875rem; font-weight: 500; }
 .btn-link:hover { text-decoration: underline; }
 .cv-list { display: flex; flex-direction: column; gap: 0.75rem; }

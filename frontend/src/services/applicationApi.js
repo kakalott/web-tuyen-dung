@@ -21,18 +21,7 @@ export const applicationApi = {
   changeStatus: (id, payload) => apiClient.request('PATCH', `/company/applications/${id}/status`, payload),
 
   // API-APP-07: Download CV private stream
-  downloadCv: async (id) => {
-    const url = `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/company/applications/${id}/cv`;
-    const response = await fetch(url, {
-      credentials: 'include',
-      headers: {
-        Accept: 'application/pdf',
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Không thể tải CV hoặc không có quyền truy cập.');
-    }
-    const blob = await response.blob();
-    return window.URL.createObjectURL(blob);
+  downloadCv: (id) => {
+    return apiClient.download(`/company/applications/${id}/cv`, `application-${id}-cv.pdf`);
   },
 };
