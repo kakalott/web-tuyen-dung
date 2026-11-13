@@ -31,4 +31,5 @@ class AIMatchResult extends Model
     public function job() { return $this->belongsTo(Job::class); }
     public function application() { return $this->belongsTo(Application::class); }
     public function matchResultSkills() { return $this->hasMany(AIMatchResultSkill::class, 'match_result_id'); }
+    public function skills() { return $this->hasMany(AIMatchResultSkill::class, 'match_result_id'); }
 }

@@ -288,7 +288,7 @@ class ApplicationService
             'cv.latestExtraction.skills',
             'statusHistories' => fn ($q) => $q->orderBy('changed_at')->orderBy('id'),
             'interviews'      => fn ($q) => $q->orderBy('scheduled_at')->orderBy('id'),
-            'latestMatchResult.skills',
+            'latestMatchResult.matchResultSkills.skill',
         ]);
     }
 
