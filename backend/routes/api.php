@@ -45,6 +45,18 @@ Route::prefix('v1')->group(function () {
                 // API-SKL-02..03
                 Route::get('/skills', [CandidateSkillController::class, 'show']);
                 Route::put('/skills', [CandidateSkillController::class, 'sync']);
+
+                // API-CV-01..07
+                Route::prefix('cvs')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\CandidateCVController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\CandidateCVController::class, 'upload']);
+                    Route::get('/{cvId}', [\App\Http\Controllers\Api\V1\CandidateCVController::class, 'show'])->whereNumber('cvId');
+                    Route::get('/{cvId}/file', [\App\Http\Controllers\Api\V1\CandidateCVController::class, 'downloadOwn'])->whereNumber('cvId');
+                    
+                    Route::get('/{cvId}/extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'show'])->whereNumber('cvId');
+                    Route::patch('/{cvId}/extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'confirm'])->whereNumber('cvId');
+                    Route::post('/{cvId}/retry-extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'retry'])->whereNumber('cvId');
+                });
             });
         });
     });

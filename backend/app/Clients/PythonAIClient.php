@@ -3,7 +3,8 @@
 namespace App\Clients;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use App\Exceptions\AIServiceException;
 use Throwable;
 
@@ -15,46 +16,67 @@ class PythonAIClient
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('services.ai_service.base_url'), '/');
-        $this->token = config('services.ai_service.internal_token');
-        $this->timeout = (int) config('services.ai_service.timeout', 15);
-    }
-
-    protected function client()
-    {
-        return Http::baseUrl($this->baseUrl)
-            ->timeout($this->timeout)
-            ->acceptJson()
-            ->withHeaders([
-                'X-Internal-Token' => $this->token ?? '',
-            ]);
+        $this->baseUrl = rtrim(config('services.ai_service.base_url', config('services.ai_service.url', 'http://127.0.0.1:8001')), '/');
+        $this->token = config('services.ai_service.internal_token', config('services.ai_service.token'));
+        $this->timeout = (int) config('services.ai_service.timeout', 30);
     }
 
     public function health(): array
     {
-        return $this->postOrGet('get', '/internal/v1/health');
+        try {
+            $response = Http::baseUrl($this->baseUrl)
+                ->timeout($this->timeout)
+                ->acceptJson()
+                ->withHeaders(['X-Internal-Token' => $this->token ?? ''])
+                ->get('/internal/v1/health');
+
+            $response->throw();
+            return $response->json();
+        } catch (Throwable $e) {
+            throw new AIServiceException('AI_SERVICE_ERROR: ' . $e->getMessage(), $e);
+        }
     }
 
-    public function extractCv(array $payload): array
+    public function extractCv(UploadedFile $file, array $catalog): array
     {
-        return $this->postOrGet('post', '/internal/v1/cv/extract', $payload);
+        $url = $this->baseUrl . '/internal/v1/cv/extract';
+
+        try {
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'X-Internal-Token' => $this->token ?? ''
+                ])->attach(
+                    'file', file_get_contents($file->getRealPath()), $file->getClientOriginalName()
+                )->post($url, [
+                    'skill_catalog' => json_encode($catalog)
+                ]);
+
+            if ($response->failed()) {
+                Log::error('AI_SERVICE_ERROR', ['status' => $response->status(), 'body' => $response->body()]);
+                throw new AIServiceException('AI_SERVICE_ERROR: status ' . $response->status());
+            }
+
+            return $response->json();
+        } catch (AIServiceException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('AI_SERVICE_ERROR', ['message' => $e->getMessage()]);
+            throw new AIServiceException('AI_SERVICE_ERROR: ' . $e->getMessage(), $e);
+        }
     }
 
     public function scoreMatching(array $payload): array
     {
-        return $this->postOrGet('post', '/internal/v1/matching/score', $payload);
-    }
-
-    protected function postOrGet(string $method, string $uri, array $data = []): array
-    {
         try {
-            $response = $method === 'get'
-                ? $this->client()->get($uri, $data)
-                : $this->client()->post($uri, $data);
+            $response = Http::baseUrl($this->baseUrl)
+                ->timeout($this->timeout)
+                ->acceptJson()
+                ->withHeaders(['X-Internal-Token' => $this->token ?? ''])
+                ->post('/internal/v1/matching/score', $payload);
 
             $response->throw();
             return $response->json('data', []);
-        } catch (RequestException|Throwable $e) {
+        } catch (Throwable $e) {
             throw new AIServiceException('AI_SERVICE_ERROR: ' . $e->getMessage(), $e);
         }
     }

@@ -14,4 +14,9 @@ class Skill extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function aliases()
+    {
+        return $this->hasMany(SkillAlias::class);
+    }
 }

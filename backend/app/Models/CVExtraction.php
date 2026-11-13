@@ -31,4 +31,10 @@ class CVExtraction extends Model
     {
         return $this->hasMany(CVExtractionSkill::class, 'cv_extraction_id');
     }
+
+    public function skills()
+    {
+        return $this->belongsToMany(Skill::class, 'cv_extraction_skills', 'cv_extraction_id', 'skill_id')
+            ->withPivot(['source', 'review_status']);
+    }
 }

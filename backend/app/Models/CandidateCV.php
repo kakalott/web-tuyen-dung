@@ -27,4 +27,9 @@ class CandidateCV extends Model
     {
         return $this->hasMany(CVExtraction::class, 'cv_id');
     }
+
+    public function latestExtraction()
+    {
+        return $this->hasOne(CVExtraction::class, 'cv_id')->latestOfMany();
+    }
 }
