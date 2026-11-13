@@ -16,4 +16,20 @@ class CandidateProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function educations()
+    {
+        return $this->hasMany(Education::class);
+    }
+
+    public function experiences()
+    {
+        return $this->hasMany(Experience::class);
+    }
+
+    public function skills()
+    {
+        return $this->belongsToMany(Skill::class, 'candidate_skills', 'candidate_profile_id', 'skill_id')
+            ->withPivot(['source', 'confirmed_at']);
+    }
 }

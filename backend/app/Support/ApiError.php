@@ -15,6 +15,16 @@ use Throwable;
 
 class ApiError
 {
+    public static function notFound(string $message = 'Tài nguyên không tồn tại hoặc đã bị xóa.'): NotFoundHttpException
+    {
+        return new NotFoundHttpException($message);
+    }
+
+    public static function forbidden(string $message = 'Bạn không có quyền truy cập tài nguyên này.'): AccessDeniedHttpException
+    {
+        return new AccessDeniedHttpException($message);
+    }
+
     public static function render($request, Throwable $exception)
     {
         $code = 'INTERNAL_ERROR';
@@ -28,7 +38,7 @@ class ApiError
             $statusCode = 401;
         } elseif ($exception instanceof AuthorizationException || $exception instanceof AccessDeniedHttpException) {
             $code = 'FORBIDDEN';
-            $message = 'Bạn không có quyền truy cập tài nguyên này.';
+            $message = $exception->getMessage() ?: 'Bạn không có quyền truy cập tài nguyên này.';
             $statusCode = 403;
         } elseif ($exception instanceof ModelNotFoundException || $exception instanceof NotFoundHttpException) {
             $code = 'RESOURCE_NOT_FOUND';

@@ -16,7 +16,15 @@ class EnsureRole
             throw new AuthenticationException();
         }
 
-        if (!in_array($request->user()->role, $roles, true)) {
+        // Nếu chuỗi truyền vào dạng 'role:candidate' hoặc 'candidate,company'
+        $parsedRoles = [];
+        foreach ($roles as $r) {
+            foreach (explode(',', $r) as $part) {
+                $parsedRoles[] = trim($part);
+            }
+        }
+
+        if (!in_array($request->user()->role, $parsedRoles, true)) {
             throw new AccessDeniedHttpException('Bạn không có quyền truy cập tài nguyên này.');
         }
 
