@@ -9,6 +9,8 @@ use App\Models\Interview;
 use App\Models\Job;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\AIMatchResult;
+use App\Models\CVExtraction;
 use App\Support\DomainStates;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,6 +20,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ApplicationService
 {
+    public function __construct(private ?MatchingService $matchingService = null)
+    {
+    }
     /**
      * APP-001 (API-APP-01): Ứng viên nộp CV vào tin tuyển dụng hợp lệ.
      */
@@ -218,34 +223,55 @@ class ApplicationService
      */
     public function listForJob(Job $job, array $filters): LengthAwarePaginator
     {
-        $pageSize = (int) ($filters['page_size'] ?? 15);
         $sort = $filters['sort'] ?? 'applied_desc';
 
+        if ($sort === 'match_desc' && $this->matchingService) {
+            return $this->matchingService->sortByScore($job->id, $filters);
+        }
+
+        $pageSize = min(50, max(1, (int) ($filters['page_size'] ?? 15)));
         $query = Application::query()
-            ->select('applications.*')
             ->with(['candidateProfile.user', 'cv', 'latestMatchResult'])
-            ->where('applications.job_id', $job->id);
+            ->where('job_id', $job->id);
 
         if (!empty($filters['status'])) {
-            $query->where('applications.status', $filters['status']);
+            $query->where('status', $filters['status']);
         }
 
-        if ($sort === 'match_desc') {
-            // Left join kết quả AI hợp lệ (không stale) để sort mà không biến missing/stale thành 0 (BR-AI-07)
-            $query->leftJoin('ai_match_results', function ($join) use ($job) {
-                $join->on('ai_match_results.cv_id', '=', 'applications.cv_id')
-                    ->where('ai_match_results.job_id', '=', $job->id)
-                    ->where('ai_match_results.is_stale', '=', false);
-            })
-            ->orderByRaw('ai_match_results.match_score IS NULL ASC')
-            ->orderByDesc('ai_match_results.match_score')
-            ->orderByDesc('applications.applied_at');
-        } else {
-            $query->orderByDesc('applications.applied_at')
-                ->orderByDesc('applications.id');
-        }
+        $paginator = $query->orderByDesc('applied_at')
+            ->orderByDesc('id')
+            ->paginate($pageSize);
 
-        return $query->paginate($pageSize);
+        // Gắn điểm match đã lưu (nếu có) và cờ score_stale cho từng hồ sơ
+        $paginator->getCollection()->transform(function (Application $app) use ($job) {
+            $latestMatch = AIMatchResult::with(['matchResultSkills.skill'])
+                ->where('cv_id', $app->cv_id)
+                ->where('job_id', $job->id)
+                ->latest('computed_at')
+                ->latest('id')
+                ->first();
+
+            $app->setRelation('latestMatchResult', $latestMatch);
+
+            if ($latestMatch && $this->matchingService) {
+                $latestExtraction = CVExtraction::with('skills')
+                    ->where('cv_id', $app->cv_id)
+                    ->where('review_status', 'confirmed')
+                    ->latest('confirmed_at')
+                    ->first();
+
+                $isStale = $latestExtraction
+                    ? $this->matchingService->isResultStale($latestMatch, $latestExtraction, $job)
+                    : true;
+                $app->setAttribute('score_stale', $isStale);
+            } else {
+                $app->setAttribute('score_stale', false);
+            }
+
+            return $app;
+        });
+
+        return $paginator;
     }
 
     /**

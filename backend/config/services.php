@@ -36,9 +36,13 @@ return [
     ],
 
     'ai_service' => [
-        'base_url' => env('AI_SERVICE_URL', 'http://127.0.0.1:8000'),
-        'internal_token' => env('AI_INTERNAL_TOKEN'),
-        'timeout' => 30,
+        'base_url' => env('AI_SERVICE_URL', 'http://127.0.0.1:8001'),
+        'url' => env('AI_SERVICE_URL', 'http://127.0.0.1:8001'),
+        'internal_token' => env('AI_INTERNAL_TOKEN', env('AI_SERVICE_TOKEN', '')),
+        'token' => env('AI_INTERNAL_TOKEN', env('AI_SERVICE_TOKEN', '')),
+        'timeout' => (int) env('AI_SERVICE_TIMEOUT', 15),
+        'algorithm_version' => env('AI_ALGORITHM_VERSION', 'hybrid-v1'),
+        'recommendation_pool_limit' => (int) env('AI_RECOMMENDATION_CANDIDATE_POOL_LIMIT', 50),
     ],
 
 ];

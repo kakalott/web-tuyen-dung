@@ -2,10 +2,12 @@
 
 namespace App\Clients;
 
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Exceptions\AIServiceException;
+use RuntimeException;
 use Throwable;
 
 class PythonAIClient
@@ -18,7 +20,7 @@ class PythonAIClient
     {
         $this->baseUrl = rtrim(config('services.ai_service.base_url', config('services.ai_service.url', 'http://127.0.0.1:8001')), '/');
         $this->token = config('services.ai_service.internal_token', config('services.ai_service.token'));
-        $this->timeout = (int) config('services.ai_service.timeout', 30);
+        $this->timeout = (int) config('services.ai_service.timeout', 15);
     }
 
     public function health(): array
@@ -67,17 +69,34 @@ class PythonAIClient
 
     public function scoreMatching(array $payload): array
     {
-        try {
-            $response = Http::baseUrl($this->baseUrl)
-                ->timeout($this->timeout)
-                ->acceptJson()
-                ->withHeaders(['X-Internal-Token' => $this->token ?? ''])
-                ->post('/internal/v1/matching/score', $payload);
+        $url = $this->baseUrl . '/internal/v1/matching/score';
 
-            $response->throw();
-            return $response->json('data', []);
-        } catch (Throwable $e) {
-            throw new AIServiceException('AI_SERVICE_ERROR: ' . $e->getMessage(), $e);
+        try {
+            $response = Http::timeout($this->timeout)
+                ->acceptJson()
+                ->withHeaders([
+                    'X-Internal-Token' => $this->token ?? '',
+                ])
+                ->post($url, $payload);
+        } catch (ConnectionException $e) {
+            Log::error('AI_SERVICE_CONNECTION_ERROR', ['message' => $e->getMessage()]);
+            throw new RuntimeException('AI_SERVICE_ERROR', 502, $e);
         }
+
+        if ($response->failed()) {
+            Log::error('AI_SERVICE_HTTP_ERROR', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            throw new RuntimeException('AI_SERVICE_ERROR', 502);
+        }
+
+        $data = $response->json('data');
+        if (!is_array($data)) {
+            Log::error('AI_SERVICE_INVALID_SCHEMA', ['body' => $response->body()]);
+            throw new RuntimeException('AI_SERVICE_ERROR', 502);
+        }
+
+        return $data;
     }
 }

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CompanyJobController;
 use App\Http\Controllers\Api\V1\AdminJobController;
 use App\Http\Controllers\Api\V1\CandidateApplicationController;
 use App\Http\Controllers\Api\V1\CompanyApplicationController;
+use App\Http\Controllers\Api\V1\RecommendationController;
 
 Route::prefix('v1')->group(function () {
 
@@ -72,6 +73,9 @@ Route::prefix('v1')->group(function () {
                     Route::patch('/{cvId}/extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'confirm'])->whereNumber('cvId');
                     Route::post('/{cvId}/retry-extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'retry'])->whereNumber('cvId');
                 });
+
+                // API-AI-01: Gợi ý việc làm theo CV đã confirmed
+                Route::get('/recommendations', [RecommendationController::class, 'recommend']);
 
                 // API-APP-02..04: Danh sách, chi tiết và rút đơn ứng tuyển
                 Route::prefix('applications')->group(function () {
