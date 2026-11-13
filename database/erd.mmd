@@ -1,0 +1,91 @@
+erDiagram
+    USERS ||--o{ CANDIDATE_PROFILES : "has"
+    USERS ||--o{ EMPLOYER_PROFILES : "has"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    
+    COMPANIES ||--o{ EMPLOYER_PROFILES : "employs"
+    COMPANIES ||--o{ JOBS : "posts"
+    
+    JOBS ||--o{ JOB_APPLICATIONS : "receives"
+    JOBS ||--o{ JOB_SKILLS : "requires"
+    
+    CANDIDATE_PROFILES ||--o{ CVS : "owns"
+    CANDIDATE_PROFILES ||--o{ CANDIDATE_SKILLS : "has"
+    
+    CVS ||--o{ JOB_APPLICATIONS : "used_in"
+    CVS ||--o{ AI_MATCHING_SCORES : "evaluated_in"
+    JOBS ||--o{ AI_MATCHING_SCORES : "compared_in"
+
+    USERS {
+        bigint id PK
+        string email UK
+        string password
+        string role "admin|employer|candidate"
+        string status "active|suspended|pending"
+        timestamp email_verified_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    COMPANIES {
+        bigint id PK
+        string name
+        string tax_code UK
+        string website
+        string logo_url
+        string address
+        text description
+        string verification_status "unverified|verified|rejected"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    JOBS {
+        bigint id PK
+        bigint company_id FK
+        string title
+        text description
+        text requirements
+        text benefits
+        decimal salary_min
+        decimal salary_max
+        string currency
+        string location
+        string employment_type "full_time|part_time|contract|internship"
+        string status "draft|published|closed"
+        timestamp expires_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    CVS {
+        bigint id PK
+        bigint candidate_profile_id FK
+        string original_filename
+        string storage_path
+        string file_hash
+        json parsed_data
+        timestamp parsed_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    JOB_APPLICATIONS {
+        bigint id PK
+        bigint job_id FK
+        bigint cv_id FK
+        string status "pending|reviewing|interview|accepted|rejected"
+        text cover_letter
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    AI_MATCHING_SCORES {
+        bigint id PK
+        bigint job_id FK
+        bigint cv_id FK
+        decimal match_score
+        text score_breakdown
+        string algorithm_version
+        timestamp calculated_at
+    }
