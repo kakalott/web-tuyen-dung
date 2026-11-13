@@ -19,8 +19,15 @@ class JobPolicy
     }
 
     /**
-     * Xem chi tiết tin trong không gian quản lý của Doanh nghiệp (API-JOB-05).
+     * Doanh nghiệp đã xác minh xem danh sách hồ sơ nộp vào tin của mình (API-APP-05).
      */
+    public function viewJobApplications(User $user, Job $job): bool
+    {
+        return $user->role === 'company'
+            && $user->company !== null
+            && $user->company->verification_status === 'verified'
+            && $job->company_id === $user->company->id;
+    }
     public function viewCompanyJob(User $user, Job $job): bool
     {
         return $user->role === 'company'

@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\V1\PublicJobController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CompanyJobController;
 use App\Http\Controllers\Api\V1\AdminJobController;
+use App\Http\Controllers\Api\V1\CandidateApplicationController;
+use App\Http\Controllers\Api\V1\CompanyApplicationController;
 
 Route::prefix('v1')->group(function () {
 
@@ -39,7 +41,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware(['active_account'])->group(function () {
             Route::get('/me', [AuthController::class, 'me']);
 
-            // --- CANDIDATE ROUTES (PHASE 04) ---
+            // --- CANDIDATE ROUTES (PHASE 04 & 08) ---
             Route::prefix('candidate')->middleware(['role:candidate'])->group(function () {
                 // API-CAN-01..02
                 Route::get('/profile', [CandidateProfileController::class, 'show']);
@@ -70,9 +72,21 @@ Route::prefix('v1')->group(function () {
                     Route::patch('/{cvId}/extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'confirm'])->whereNumber('cvId');
                     Route::post('/{cvId}/retry-extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'retry'])->whereNumber('cvId');
                 });
+
+                // API-APP-02..04: Danh sách, chi tiết và rút đơn ứng tuyển
+                Route::prefix('applications')->group(function () {
+                    Route::get('/', [CandidateApplicationController::class, 'index']);
+                    Route::get('/{id}', [CandidateApplicationController::class, 'show'])->whereNumber('id');
+                    Route::post('/{id}/withdraw', [CandidateApplicationController::class, 'withdraw'])->whereNumber('id');
+                });
             });
 
-            // --- COMPANY ROUTES (PHASE 06 & 07) ---
+            // API-APP-01: Ứng viên nộp hồ sơ vào tin tuyển dụng
+            Route::post('/jobs/{jobId}/applications', [CandidateApplicationController::class, 'apply'])
+                ->middleware(['role:candidate'])
+                ->whereNumber('jobId');
+
+            // --- COMPANY ROUTES (PHASE 06, 07 & 08) ---
             Route::prefix('company')->middleware(['role:company'])->group(function () {
                 // API-COM-01..02
                 Route::get('/profile', [CompanyProfileController::class, 'show']);
@@ -84,6 +98,14 @@ Route::prefix('v1')->group(function () {
                 Route::get('/jobs/{jobId}', [CompanyJobController::class, 'showOwn'])->whereNumber('jobId');
                 Route::patch('/jobs/{jobId}', [CompanyJobController::class, 'update'])->whereNumber('jobId');
                 Route::post('/jobs/{jobId}/close', [CompanyJobController::class, 'close'])->whereNumber('jobId');
+
+                // API-APP-05: Danh sách hồ sơ ứng tuyển theo tin tuyển dụng
+                Route::get('/jobs/{jobId}/applications', [CompanyApplicationController::class, 'indexByJob'])->whereNumber('jobId');
+
+                // API-APP-06..08: Chi tiết đơn, stream CV bảo mật, cập nhật trạng thái đơn
+                Route::get('/applications/{id}', [CompanyApplicationController::class, 'show'])->whereNumber('id');
+                Route::get('/applications/{id}/cv', [CompanyApplicationController::class, 'downloadForApplication'])->whereNumber('id');
+                Route::patch('/applications/{id}/status', [CompanyApplicationController::class, 'changeStatus'])->whereNumber('id');
             });
 
             // --- ADMIN ROUTES (PHASE 06 & 07) ---
