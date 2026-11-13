@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\AdminJobController;
 use App\Http\Controllers\Api\V1\CandidateApplicationController;
 use App\Http\Controllers\Api\V1\CompanyApplicationController;
 use App\Http\Controllers\Api\V1\InterviewController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\RecommendationController;
 
 Route::prefix('v1')->group(function () {
@@ -42,6 +43,13 @@ Route::prefix('v1')->group(function () {
 
         Route::middleware(['active_account'])->group(function () {
             Route::get('/me', [AuthController::class, 'me']);
+
+            // --- TRANSACTIONAL NOTIFICATION ROUTES (PHASE 11: API-NOTI-01..03) ---
+            Route::prefix('notifications')->group(function () {
+                Route::get('/', [NotificationController::class, 'index']);
+                Route::patch('/{id}/read', [NotificationController::class, 'markRead'])->whereNumber('id');
+                Route::post('/read-all', [NotificationController::class, 'markAllRead']);
+            });
 
             // --- CANDIDATE ROUTES (PHASE 04 & 08) ---
             Route::prefix('candidate')->middleware(['role:candidate'])->group(function () {
