@@ -77,14 +77,7 @@ class ApplicationResource extends JsonResource
             ])->values()),
 
             // Lịch phỏng vấn đính kèm
-            'interviews' => $this->whenLoaded('interviews', fn () => $this->interviews->map(fn ($iv) => [
-                'id'               => $iv->id,
-                'scheduled_at'     => $iv->scheduled_at?->toIso8601String(),
-                'location_or_mode' => $iv->location_or_mode,
-                'notes'            => $iv->notes,
-                'status'           => $iv->status,
-                'cancel_reason'    => $iv->cancel_reason,
-            ])->values()),
+            'interviews' => InterviewResource::collection($this->whenLoaded('interviews')),
 
             // Kết quả AI Matching tham khảo (nếu đã có)
             'match_result' => $this->whenLoaded('latestMatchResult', fn () => $this->latestMatchResult

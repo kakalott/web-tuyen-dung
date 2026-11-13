@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CompanyJobController;
 use App\Http\Controllers\Api\V1\AdminJobController;
 use App\Http\Controllers\Api\V1\CandidateApplicationController;
 use App\Http\Controllers\Api\V1\CompanyApplicationController;
+use App\Http\Controllers\Api\V1\InterviewController;
 use App\Http\Controllers\Api\V1\RecommendationController;
 
 Route::prefix('v1')->group(function () {
@@ -110,6 +111,13 @@ Route::prefix('v1')->group(function () {
                 Route::get('/applications/{id}', [CompanyApplicationController::class, 'show'])->whereNumber('id');
                 Route::get('/applications/{id}/cv', [CompanyApplicationController::class, 'downloadForApplication'])->whereNumber('id');
                 Route::patch('/applications/{id}/status', [CompanyApplicationController::class, 'changeStatus'])->whereNumber('id');
+
+                // --- COMPANY INTERVIEW ROUTES (PHASE 10: API-INT-01..05) ---
+                Route::post('/applications/{id}/interviews', [InterviewController::class, 'schedule'])->whereNumber('id');
+                Route::patch('/interviews/{id}', [InterviewController::class, 'update'])->whereNumber('id');
+                Route::post('/interviews/{id}/cancel', [InterviewController::class, 'cancel'])->whereNumber('id');
+                Route::post('/interviews/{id}/complete', [InterviewController::class, 'complete'])->whereNumber('id');
+                Route::post('/interviews/{id}/no-show', [InterviewController::class, 'noShow'])->whereNumber('id');
             });
 
             // --- ADMIN ROUTES (PHASE 06 & 07) ---
