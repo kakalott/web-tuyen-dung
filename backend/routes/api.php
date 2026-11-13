@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\V1\CandidateEducationController;
 use App\Http\Controllers\Api\V1\CandidateExperienceController;
 use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\CandidateSkillController;
+use App\Http\Controllers\Api\V1\CompanyProfileController;
+use App\Http\Controllers\Api\V1\AdminCompanyController;
 
 Route::prefix('v1')->group(function () {
 
@@ -57,6 +59,21 @@ Route::prefix('v1')->group(function () {
                     Route::patch('/{cvId}/extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'confirm'])->whereNumber('cvId');
                     Route::post('/{cvId}/retry-extraction', [\App\Http\Controllers\Api\V1\CVExtractionController::class, 'retry'])->whereNumber('cvId');
                 });
+            });
+
+            // --- COMPANY ROUTES (PHASE 06) ---
+            Route::prefix('company')->middleware(['role:company'])->group(function () {
+                // API-COM-01..02
+                Route::get('/profile', [CompanyProfileController::class, 'show']);
+                Route::patch('/profile', [CompanyProfileController::class, 'update']);
+            });
+
+            // --- ADMIN ROUTES (PHASE 06) ---
+            Route::prefix('admin')->middleware(['role:admin'])->group(function () {
+                // API-ADM-01..03
+                Route::get('/companies/unverified', [AdminCompanyController::class, 'unverified']);
+                Route::get('/companies/{companyId}', [AdminCompanyController::class, 'showCompany'])->whereNumber('companyId');
+                Route::patch('/companies/{companyId}/verification', [AdminCompanyController::class, 'verify'])->whereNumber('companyId');
             });
         });
     });

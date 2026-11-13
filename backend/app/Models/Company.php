@@ -13,6 +13,10 @@ class Company extends Model
     protected $fillable = ['user_id', 'company_name', 'description', 'website_url']; 
     // verification_status, verification_note, verified_by, verified_at bị ẩn khỏi mass-assignment
 
+    protected $casts = [
+        'verified_at' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
