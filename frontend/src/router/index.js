@@ -6,9 +6,15 @@ import CandidateLayout from '@/layouts/CandidateLayout.vue';
 import CompanyLayout from '@/layouts/CompanyLayout.vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 
+// Auth Pages (P-AUTH-01..02)
 import LoginPage from '@/pages/auth/LoginPage.vue';
 import RegisterPage from '@/pages/auth/RegisterPage.vue';
+
+// Public Job Search & Detail (P-PUB-01..02)
 import JobsPage from '@/pages/jobs/JobsPage.vue';
+import JobDetailPage from '@/pages/jobs/JobDetailPage.vue';
+
+// Error Pages
 import NotFoundPage from '@/pages/errors/NotFoundPage.vue';
 import ForbiddenPage from '@/pages/errors/ForbiddenPage.vue';
 
@@ -29,6 +35,15 @@ import CompanyJobDetailPage from '@/pages/company/CompanyJobDetailPage.vue';
 import CompanyApplicantsPage from '@/pages/company/CompanyApplicantsPage.vue';
 import CompanyApplicationDetailPage from '@/pages/company/CompanyApplicationDetailPage.vue';
 
+// Admin Pages (P-ADM-01..07)
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage.vue';
+import AdminCompaniesPage from '@/pages/admin/AdminCompaniesPage.vue';
+import AdminCompanyDetailPage from '@/pages/admin/AdminCompanyDetailPage.vue';
+import AdminJobsPage from '@/pages/admin/AdminJobsPage.vue';
+import AdminJobDetailPage from '@/pages/admin/AdminJobDetailPage.vue';
+import AdminSkillsPage from '@/pages/admin/AdminSkillsPage.vue';
+import AdminLookupsPage from '@/pages/admin/AdminLookupsPage.vue';
+
 const routes = [
   // --- PUBLIC ROUTES ---
   {
@@ -40,6 +55,12 @@ const routes = [
         path: 'jobs',
         name: 'jobs',
         component: JobsPage,
+        meta: { requiresAuth: false },
+      },
+      {
+        path: 'jobs/:jobId',
+        name: 'job-detail-public',
+        component: JobDetailPage,
         meta: { requiresAuth: false },
       },
       {
@@ -158,6 +179,51 @@ const routes = [
         path: 'notifications',
         name: 'company-notifications',
         component: NotificationsPage,
+      },
+    ],
+  },
+
+  // --- ADMIN ROUTES (P-ADM-01..07) ---
+  {
+    path: '/admin',
+    component: AdminLayout,
+    meta: { requiresAuth: true, roles: ['admin'] },
+    children: [
+      { path: '', redirect: '/admin/dashboard' },
+      {
+        path: 'dashboard',
+        name: 'admin-dashboard',
+        component: AdminDashboardPage,
+      },
+      {
+        path: 'companies',
+        name: 'admin-companies',
+        component: AdminCompaniesPage,
+      },
+      {
+        path: 'companies/:id',
+        name: 'admin-company-detail',
+        component: AdminCompanyDetailPage,
+      },
+      {
+        path: 'jobs',
+        name: 'admin-jobs',
+        component: AdminJobsPage,
+      },
+      {
+        path: 'jobs/:id',
+        name: 'admin-job-detail',
+        component: AdminJobDetailPage,
+      },
+      {
+        path: 'skills',
+        name: 'admin-skills',
+        component: AdminSkillsPage,
+      },
+      {
+        path: 'catalog/:catalog',
+        name: 'admin-catalog-lookups',
+        component: AdminLookupsPage,
       },
     ],
   },
