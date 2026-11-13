@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\V1\CompanyApplicationController;
 use App\Http\Controllers\Api\V1\InterviewController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\RecommendationController;
+use App\Http\Controllers\Api\V1\AdminCatalogController;
+use App\Http\Controllers\Api\V1\AdminDashboardController;
 
 Route::prefix('v1')->group(function () {
 
@@ -128,8 +130,11 @@ Route::prefix('v1')->group(function () {
                 Route::post('/interviews/{id}/no-show', [InterviewController::class, 'noShow'])->whereNumber('id');
             });
 
-            // --- ADMIN ROUTES (PHASE 06 & 07) ---
+            // --- ADMIN ROUTES (PHASE 06, 07 & 12) ---
             Route::prefix('admin')->middleware(['role:admin'])->group(function () {
+                // API-ADM-08: Thống kê dashboard tổng quan
+                Route::get('/dashboard', [AdminDashboardController::class, 'dashboard']);
+
                 // API-ADM-01..03
                 Route::get('/companies/unverified', [AdminCompanyController::class, 'unverified']);
                 Route::get('/companies/{companyId}', [AdminCompanyController::class, 'showCompany'])->whereNumber('companyId');
@@ -140,6 +145,23 @@ Route::prefix('v1')->group(function () {
                 Route::get('/jobs/{id}', [AdminJobController::class, 'showJob'])->whereNumber('id');
                 Route::patch('/jobs/{id}/review', [AdminJobController::class, 'reviewJob'])->whereNumber('id');
                 Route::patch('/jobs/{id}/hide', [AdminJobController::class, 'hideJob'])->whereNumber('id');
+
+                // --- ADMIN CATALOG ROUTES (PHASE 12: API-CAT-01..05 & API-CAT-07..09) ---
+                Route::prefix('catalog')->group(function () {
+                    // API-CAT-01..03: Kỹ năng chuẩn
+                    Route::get('/skills', [AdminCatalogController::class, 'skillsIndex']);
+                    Route::post('/skills', [AdminCatalogController::class, 'skillStore']);
+                    Route::patch('/skills/{id}', [AdminCatalogController::class, 'skillUpdate'])->whereNumber('id');
+
+                    // API-CAT-04..05: Biến thể kỹ năng (aliases)
+                    Route::post('/skills/{id}/aliases', [AdminCatalogController::class, 'aliasStore'])->whereNumber('id');
+                    Route::patch('/aliases/{id}', [AdminCatalogController::class, 'aliasUpdate'])->whereNumber('id');
+
+                    // API-CAT-07..09: 4 danh mục tuyển dụng động (khai báo sau routes tĩnh để tránh nuốt URL)
+                    Route::get('/{catalog}', [AdminCatalogController::class, 'lookupIndex']);
+                    Route::post('/{catalog}', [AdminCatalogController::class, 'lookupStore']);
+                    Route::patch('/{catalog}/{id}', [AdminCatalogController::class, 'lookupUpdate'])->whereNumber('id');
+                });
             });
         });
     });
