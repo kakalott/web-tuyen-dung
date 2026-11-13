@@ -1,0 +1,9 @@
+/.phpunit.result.cache
+backend/.phpunit.result.cache
+node_modules/
+frontend/dist/
+__pycache__/
+*.py[cod]
+.env.local
+.env.*.local
+*.log
