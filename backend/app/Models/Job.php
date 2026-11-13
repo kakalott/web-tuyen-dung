@@ -32,6 +32,12 @@ class Job extends Model
         return $this->hasMany(JobSkill::class, 'job_id');
     }
 
+    public function skills()
+    {
+        return $this->belongsToMany(Skill::class, 'job_skills', 'job_id', 'skill_id')
+            ->withPivot('requirement_type');
+    }
+
     // Các quan hệ tới bảng danh mục
     public function jobGroup() { return $this->belongsTo(JobGroup::class); }
     public function employmentType() { return $this->belongsTo(EmploymentType::class); }

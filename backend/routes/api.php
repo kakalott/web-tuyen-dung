@@ -9,6 +9,10 @@ use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\CandidateSkillController;
 use App\Http\Controllers\Api\V1\CompanyProfileController;
 use App\Http\Controllers\Api\V1\AdminCompanyController;
+use App\Http\Controllers\Api\V1\PublicJobController;
+use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\CompanyJobController;
+use App\Http\Controllers\Api\V1\AdminJobController;
 
 Route::prefix('v1')->group(function () {
 
@@ -20,6 +24,13 @@ Route::prefix('v1')->group(function () {
 
     // API-SKL-01: Tra cứu danh mục kỹ năng chuẩn đang hoạt động
     Route::get('/catalog/skills', [SkillController::class, 'index']);
+
+    // API-CAT-06: Lấy 4 danh mục bộ lọc active
+    Route::get('/catalog/lookups', [CatalogController::class, 'publicLookups']);
+
+    // API-JOB-01 & API-JOB-02: Tìm kiếm và xem chi tiết việc làm công khai
+    Route::get('/jobs', [PublicJobController::class, 'index']);
+    Route::get('/jobs/{jobId}', [PublicJobController::class, 'show'])->whereNumber('jobId');
 
     // --- AUTHENTICATED ROUTES ---
     Route::middleware(['auth:sanctum'])->group(function () {
@@ -61,19 +72,32 @@ Route::prefix('v1')->group(function () {
                 });
             });
 
-            // --- COMPANY ROUTES (PHASE 06) ---
+            // --- COMPANY ROUTES (PHASE 06 & 07) ---
             Route::prefix('company')->middleware(['role:company'])->group(function () {
                 // API-COM-01..02
                 Route::get('/profile', [CompanyProfileController::class, 'show']);
                 Route::patch('/profile', [CompanyProfileController::class, 'update']);
+
+                // API-JOB-03..07
+                Route::get('/jobs', [CompanyJobController::class, 'indexOwn']);
+                Route::post('/jobs', [CompanyJobController::class, 'store']);
+                Route::get('/jobs/{jobId}', [CompanyJobController::class, 'showOwn'])->whereNumber('jobId');
+                Route::patch('/jobs/{jobId}', [CompanyJobController::class, 'update'])->whereNumber('jobId');
+                Route::post('/jobs/{jobId}/close', [CompanyJobController::class, 'close'])->whereNumber('jobId');
             });
 
-            // --- ADMIN ROUTES (PHASE 06) ---
+            // --- ADMIN ROUTES (PHASE 06 & 07) ---
             Route::prefix('admin')->middleware(['role:admin'])->group(function () {
                 // API-ADM-01..03
                 Route::get('/companies/unverified', [AdminCompanyController::class, 'unverified']);
                 Route::get('/companies/{companyId}', [AdminCompanyController::class, 'showCompany'])->whereNumber('companyId');
                 Route::patch('/companies/{companyId}/verification', [AdminCompanyController::class, 'verify'])->whereNumber('companyId');
+
+                // API-ADM-04..07
+                Route::get('/jobs/pending', [AdminJobController::class, 'pendingJobs']);
+                Route::get('/jobs/{id}', [AdminJobController::class, 'showJob'])->whereNumber('id');
+                Route::patch('/jobs/{id}/review', [AdminJobController::class, 'reviewJob'])->whereNumber('id');
+                Route::patch('/jobs/{id}/hide', [AdminJobController::class, 'hideJob'])->whereNumber('id');
             });
         });
     });

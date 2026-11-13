@@ -9,6 +9,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use App\Exceptions\DomainConflictException;
 use App\Exceptions\AIServiceException;
 use Throwable;
@@ -63,6 +64,10 @@ class ApiError
         } elseif ($exception instanceof DomainConflictException) {
             $code = 'STATE_CONFLICT';
             $message = $exception->getMessage();
+            $statusCode = 409;
+        } elseif ($exception instanceof HttpException && $exception->getStatusCode() === 409) {
+            $code = 'STATE_CONFLICT';
+            $message = $exception->getMessage() ?: 'Xung đột trạng thái tài nguyên.';
             $statusCode = 409;
         } elseif ($exception instanceof AIServiceException) {
             $code = 'AI_SERVICE_ERROR';
