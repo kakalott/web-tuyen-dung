@@ -37,6 +37,10 @@ class CatalogItemRequest extends FormRequest
             $sanitized['alias_name'] = preg_replace('/\s+/u', ' ', trim($this->input('alias_name')));
         }
 
+        if ($this->has('alias') && is_string($this->input('alias'))) {
+            $sanitized['alias'] = preg_replace('/\s+/u', ' ', trim($this->input('alias')));
+        }
+
         if (!empty($sanitized)) {
             $this->merge($sanitized);
         }
@@ -52,8 +56,14 @@ class CatalogItemRequest extends FormRequest
 
         if ($isAliasRoute) {
             return [
+                'alias' => [
+                    $isCreate && !$this->has('alias_name') ? 'required' : 'sometimes',
+                    'string',
+                    'min:1',
+                    'max:120',
+                ],
                 'alias_name' => [
-                    $isCreate ? 'required' : 'sometimes',
+                    $isCreate && !$this->has('alias') ? 'required' : 'sometimes',
                     'string',
                     'min:1',
                     'max:120',
@@ -78,6 +88,8 @@ class CatalogItemRequest extends FormRequest
         return [
             'name.required'       => 'Tên mục danh mục không được để trống.',
             'name.max'            => 'Tên mục danh mục không được vượt quá 120 ký tự.',
+            'alias.required'      => 'Tên biến thể (alias) không được để trống.',
+            'alias.max'           => 'Tên biến thể (alias) không được vượt quá 120 ký tự.',
             'alias_name.required' => 'Tên biến thể (alias) không được để trống.',
             'alias_name.max'      => 'Tên biến thể (alias) không được vượt quá 120 ký tự.',
             'is_active.boolean'   => 'Trạng thái kích hoạt (is_active) phải là kiểu boolean.',

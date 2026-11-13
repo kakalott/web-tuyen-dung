@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Application;
 use App\Models\Company;
 use App\Models\Job;
 use App\Models\Notification;
@@ -217,5 +218,18 @@ class AdminService
 
             return $job->fresh();
         });
+    }
+
+    /**
+     * ADM-003 (API-ADM-08): Thống kê tổng quan 4 chỉ số cốt lõi trực tiếp từ MySQL.
+     */
+    public function dashboard(): array
+    {
+        return [
+            'users_total'          => User::count(),
+            'companies_unverified' => Company::where('verification_status', 'unverified')->count(),
+            'jobs_pending'         => Job::where('review_status', 'pending')->count(),
+            'applications_total'   => Application::count(),
+        ];
     }
 }
