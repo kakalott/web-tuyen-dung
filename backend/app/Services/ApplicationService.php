@@ -125,7 +125,7 @@ class ApplicationService
         $candidateProfileId = $actor->candidateProfile->id;
         $pageSize = (int) ($filters['page_size'] ?? 15);
 
-        $query = Application::with(['job.company'])
+        $query = Application::with(['job.company', 'cv'])
             ->where('candidate_profile_id', $candidateProfileId);
 
         if (!empty($filters['status'])) {

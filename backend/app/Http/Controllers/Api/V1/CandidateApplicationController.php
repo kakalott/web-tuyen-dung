@@ -53,6 +53,8 @@ class CandidateApplicationController extends Controller
             'job_id'       => $app->job_id,
             'job_title'    => $app->job?->title,
             'company_name' => $app->job?->company?->company_name,
+            'cv_id'        => $app->cv_id,
+            'cv_filename'  => $app->cv?->original_filename ?? $app->candidateCV?->original_filename,
             'status'       => $app->status,
             'applied_at'   => $app->applied_at?->toIso8601String(),
         ])->values();

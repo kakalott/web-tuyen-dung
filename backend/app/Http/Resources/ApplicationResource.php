@@ -16,6 +16,7 @@ class ApplicationResource extends JsonResource
             'candidate_profile_id' => $this->candidate_profile_id,
             'job_id'               => $this->job_id,
             'cv_id'                => $this->cv_id,
+            'cv_filename'          => $this->relationLoaded('cv') ? $this->cv?->original_filename : null,
             'status'               => $this->status,
             'applied_at'           => $this->applied_at?->toIso8601String(),
             'withdrawn_at'         => $this->withdrawn_at?->toIso8601String(),

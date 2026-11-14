@@ -144,13 +144,16 @@ class ApplicationTest extends TestCase
         $this->actingAs($candidateUser, 'sanctum')
             ->getJson('/api/v1/candidate/applications')
             ->assertStatus(200)
-            ->assertJsonCount(1, 'data.items');
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.cv_id', $cv->id)
+            ->assertJsonPath('data.items.0.cv_filename', 'resume.pdf');
 
         $detailRes = $this->actingAs($candidateUser, 'sanctum')
             ->getJson("/api/v1/candidate/applications/{$appId}");
 
         $detailRes->assertStatus(200)
             ->assertJsonPath('data.application.id', $appId)
+            ->assertJsonPath('data.application.cv_filename', 'resume.pdf')
             ->assertJsonMissing(['storage_key']);
     }
 
