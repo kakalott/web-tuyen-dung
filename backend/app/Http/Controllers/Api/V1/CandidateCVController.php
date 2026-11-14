@@ -17,6 +17,7 @@ class CandidateCVController extends Controller
     public function index(Request $request)
     {
         $cvs = CandidateCV::where('candidate_profile_id', $request->user()->candidateProfile->id)
+            ->with(['latestExtraction.skills'])
             ->latest('uploaded_at')
             ->paginate();
         return CVResource::collection($cvs);

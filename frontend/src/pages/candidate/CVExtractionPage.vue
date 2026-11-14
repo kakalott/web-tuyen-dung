@@ -43,9 +43,9 @@
         <div class="form-group">
           <label class="form-label">Kỹ năng AI nhận diện:</label>
           <div class="skill-tags">
-            <span v-for="skill in formData.skills" :key="skill.id" class="skill-tag">
+            <span v-for="skill in formData.skills" :key="skill.skill_id ?? skill.id" class="skill-tag">
               {{ skill.name }}
-              <button type="button" @click="removeSkill(skill.id)" class="tag-remove">&times;</button>
+              <button type="button" @click="removeSkill(skill.skill_id ?? skill.id)" class="tag-remove">&times;</button>
             </span>
           </div>
           <p v-if="!formData.skills.length" class="empty-hint">Không có kỹ năng nào được nhận diện tự động.</p>
@@ -79,6 +79,7 @@ const submitting = ref(false);
 const retrying = ref(false);
 const confirmError = ref('');
 const formData = ref({ confirmed_text: '', skills: [] });
+const rejectedSkillIds = ref([]);
 
 const loadExtraction = async () => {
   loading.value = true;
@@ -88,6 +89,7 @@ const loadExtraction = async () => {
     extraction.value = res.data;
     formData.value.confirmed_text = res.data.confirmed_text || res.data.extracted_text || '';
     formData.value.skills = res.data.skills || [];
+    rejectedSkillIds.value = [];
   } catch (err) {
     error.value = err.message || 'Không thể tải kết quả trích xuất.';
   } finally {
@@ -98,13 +100,29 @@ const loadExtraction = async () => {
 onMounted(loadExtraction);
 
 const handleConfirm = async () => {
+  if (!formData.value.confirmed_text || !formData.value.confirmed_text.trim()) {
+    confirmError.value = 'Nội dung trích xuất không được để trống.';
+    return;
+  }
+
   submitting.value = true;
   confirmError.value = '';
   try {
-    await cvApi.confirmExtraction(cvId, {
-      confirmed_text: formData.value.confirmed_text,
-      skill_ids: formData.value.skills.map((s) => s.id),
-    });
+    const confirmedIds = formData.value.skills
+      .map((s) => Number(s.skill_id ?? s.id))
+      .filter((id) => !isNaN(id) && id > 0);
+
+    const finalRejectedIds = rejectedSkillIds.value
+      .map((id) => Number(id))
+      .filter((id) => !isNaN(id) && id > 0 && !confirmedIds.includes(id));
+
+    const payload = {
+      confirmed_text: formData.value.confirmed_text.trim(),
+      confirmed_skill_ids: confirmedIds,
+      rejected_skill_ids: finalRejectedIds,
+    };
+
+    await cvApi.confirmExtraction(cvId, payload);
     router.push('/candidate/cvs');
   } catch (err) {
     confirmError.value = err.message || 'Xác nhận thất bại.';
@@ -126,7 +144,13 @@ const handleRetry = async () => {
 };
 
 const removeSkill = (skillId) => {
-  formData.value.skills = formData.value.skills.filter((s) => s.id !== skillId);
+  const targetId = Number(skillId);
+  formData.value.skills = formData.value.skills.filter(
+    (s) => Number(s.skill_id ?? s.id) !== targetId
+  );
+  if (!rejectedSkillIds.value.includes(targetId)) {
+    rejectedSkillIds.value.push(targetId);
+  }
 };
 </script>
 

@@ -53,6 +53,10 @@ export const cvApi = {
     return apiClient.request('PATCH', `/candidate/cvs/${cvId}/extraction`, data);
   },
 
+  confirm(cvId, data) {
+    return this.confirmExtraction(cvId, data);
+  },
+
   // API-CV-07: Thử trích xuất lại
   retryExtraction(cvId) {
     return apiClient.request('POST', `/candidate/cvs/${cvId}/retry-extraction`);

@@ -34,35 +34,79 @@
 
     <div v-else class="cv-list">
       <div v-for="cv in cvs" :key="cv.id" class="cv-card">
-        <div class="cv-info">
-          <strong>{{ cv.original_filename }}</strong>
-          <div class="cv-meta">
-            <span class="badge" :class="badgeClass(cv.parse_status)">
-              {{ statusLabel(cv.parse_status) }}
-            </span>
-            <span class="text-muted text-sm">{{ formatDate(cv.uploaded_at) }}</span>
+        <div class="cv-main">
+          <div class="cv-info">
+            <div class="cv-title-row">
+              <strong class="cv-name">{{ cv.original_filename }}</strong>
+              <span class="badge" :class="badgeClass(cv.parse_status)">
+                {{ statusLabel(cv.parse_status) }}
+              </span>
+              <span
+                v-if="cv.review_status === 'confirmed'"
+                class="badge badge-confirmed"
+              >
+                ✓ Đã xác nhận kỹ năng
+              </span>
+              <span
+                v-else-if="cv.parse_status === 'processed'"
+                class="badge badge-warning"
+              >
+                Chờ xác nhận
+              </span>
+            </div>
+            <div class="cv-meta">
+              <span class="text-muted text-sm">Tải lên: {{ formatDate(cv.uploaded_at) }}</span>
+            </div>
+          </div>
+
+          <!-- Danh sách kỹ năng trích xuất được -->
+          <div v-if="cv.skills && cv.skills.length" class="cv-skills">
+            <span class="skills-label">Kỹ năng:</span>
+            <div class="skills-wrap">
+              <span
+                v-for="skill in cv.skills"
+                :key="skill.id"
+                class="skill-chip"
+                :class="{ 'chip-confirmed': skill.review_status === 'confirmed' }"
+              >
+                {{ skill.name }}
+              </span>
+            </div>
           </div>
         </div>
+
         <div class="cv-actions">
           <button
             @click="handleDownload(cv.id)"
-            class="btn-outline-sm mr-2"
+            class="btn-outline-sm"
             title="Tải file PDF gốc"
           >
             Tải PDF
           </button>
-          <router-link
-            v-if="cv.parse_status === 'processed'"
-            :to="`/candidate/cvs/${cv.id}/extraction`"
-            class="btn-link"
-          >
-            Xem &amp; Xác nhận trích xuất
-          </router-link>
+
+          <template v-if="cv.parse_status === 'processed'">
+            <router-link
+              v-if="cv.review_status === 'confirmed'"
+              :to="`/candidate/cvs/${cv.id}/extraction`"
+              class="btn-outline-sm btn-action"
+            >
+              Xem / Sửa trích xuất
+            </router-link>
+            <router-link
+              v-else
+              :to="`/candidate/cvs/${cv.id}/extraction`"
+              class="btn-primary-sm btn-action"
+            >
+              Kiểm tra &amp; Xác nhận
+            </router-link>
+          </template>
+
           <span v-else-if="cv.parse_status === 'processing'" class="text-muted text-sm">
             Đang xử lý...
           </span>
+
           <template v-else-if="cv.parse_status === 'failed'">
-            <span class="text-danger text-sm mr-2">Trích xuất lỗi</span>
+            <span class="text-danger text-sm">Trích xuất lỗi</span>
             <button
               @click="handleRetry(cv.id)"
               :disabled="retryingId === cv.id"
@@ -183,23 +227,33 @@ const formatDate = (d) => (d ? new Date(d).toLocaleDateString('vi-VN') : '');
 .hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem; }
 .btn-primary { background: #2563eb; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-outline-sm { background: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 0.25rem 0.6rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; }
+.btn-outline-sm { background: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 0.25rem 0.6rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; }
 .btn-outline-sm:hover { background: #f1f5f9; }
-.mr-2 { margin-right: 0.5rem; }
+.btn-primary-sm { background: #2563eb; color: #fff; border: 1px solid #2563eb; padding: 0.25rem 0.65rem; border-radius: 0.375rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; }
+.btn-primary-sm:hover { background: #1d4ed8; }
+.btn-action { text-decoration: none; }
 .btn-retry-sm { background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 0.25rem 0.6rem; border-radius: 0.375rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
 .btn-retry-sm:hover:not(:disabled) { background-color: #fee2e2; }
 .btn-retry-sm:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-link { color: #2563eb; text-decoration: none; font-size: 0.875rem; font-weight: 500; }
-.btn-link:hover { text-decoration: underline; }
 .cv-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.cv-card { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem 1.25rem; }
+.cv-card { display: flex; justify-content: space-between; align-items: flex-start; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem 1.25rem; gap: 1rem; }
+.cv-main { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
 .cv-info { display: flex; flex-direction: column; gap: 0.375rem; }
+.cv-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.cv-name { font-size: 0.95rem; color: #0f172a; word-break: break-all; }
 .cv-meta { display: flex; gap: 0.75rem; align-items: center; }
-.cv-actions { flex-shrink: 0; }
+.cv-skills { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.125rem; }
+.skills-label { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+.skills-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.skill-chip { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+.skill-chip.chip-confirmed { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; font-weight: 500; }
+.cv-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; margin-top: 0.25rem; }
 .badge { padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
 .badge-info { background: #dbeafe; color: #1d4ed8; }
 .badge-success { background: #dcfce7; color: #16a34a; }
 .badge-danger { background: #fef2f2; color: #dc2626; }
+.badge-confirmed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-weight: 600; }
+.badge-warning { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
 .text-muted { color: #64748b; }
 .text-sm { font-size: 0.8125rem; }
 .text-danger { color: #dc2626; }
