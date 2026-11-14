@@ -27,7 +27,8 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role.in' => 'Vai trò đăng ký không hợp lệ. Chỉ chấp nhận candidate hoặc company.',
+            'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
+            'role.in'            => 'Vai trò đăng ký không hợp lệ. Chỉ chấp nhận candidate hoặc company.',
         ];
     }
 }

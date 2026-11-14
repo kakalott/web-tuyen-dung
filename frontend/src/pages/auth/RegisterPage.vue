@@ -46,11 +46,28 @@
             type="password"
             v-model="form.password"
             placeholder="Tối thiểu 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt"
+            minlength="8"
             required
             autocomplete="new-password"
           />
           <span v-if="fieldErrors.password" class="field-error">
             {{ fieldErrors.password[0] }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="password_confirmation">Nhập lại mật khẩu</label>
+          <input
+            id="password_confirmation"
+            type="password"
+            v-model="form.password_confirmation"
+            placeholder="Nhập lại mật khẩu"
+            minlength="8"
+            required
+            autocomplete="new-password"
+          />
+          <span v-if="fieldErrors.password_confirmation" class="field-error">
+            {{ fieldErrors.password_confirmation[0] }}
           </span>
         </div>
 
@@ -90,6 +107,7 @@ const form = ref({
   name: '',
   email: '',
   password: '',
+  password_confirmation: '',
   role: 'candidate',
 });
 const submitting = ref(false);
@@ -97,9 +115,18 @@ const errorMessage = ref('');
 const fieldErrors = ref({});
 
 const handleRegister = async () => {
-  submitting.value = true;
   errorMessage.value = '';
   fieldErrors.value = {};
+
+  // Kiểm tra khớp mật khẩu ngay trên UI trước khi gửi request
+  if (form.value.password !== form.value.password_confirmation) {
+    fieldErrors.value = {
+      password_confirmation: ['Mật khẩu xác nhận không khớp.'],
+    };
+    return;
+  }
+
+  submitting.value = true;
 
   try {
     await authApi.register(form.value);

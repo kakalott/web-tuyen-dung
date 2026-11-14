@@ -68,6 +68,21 @@ class AuthTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors(['email']);
     }
 
+    public function test_register_fails_when_password_confirmation_does_not_match(): void
+    {
+        $response = $this->postJson('/api/v1/auth/register', [
+            'name'                  => 'Nguyen Van B',
+            'email'                 => 'candidate2@example.com',
+            'password'              => 'Password123',
+            'password_confirmation' => 'DifferentPassword123',
+            'role'                  => 'candidate',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'VALIDATION_ERROR')
+            ->assertJsonStructure(['error' => ['fields' => ['password']]]);
+    }
+
     public function test_login_me_and_logout(): void
     {
         $user = User::factory()->create([
