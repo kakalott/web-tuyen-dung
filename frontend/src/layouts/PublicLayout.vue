@@ -7,6 +7,40 @@
         </router-link>
         <nav class="public-nav">
           <router-link to="/jobs" class="nav-link">Việc làm</router-link>
+
+          <!-- Lối tắt điều hướng nhanh cho Ứng viên khi đang ở Public Layout -->
+          <template v-if="authStore.isAuthenticated && authStore.role === 'candidate'">
+            <router-link to="/candidate/cvs" class="nav-link nav-highlight">
+              Quản lý CV
+            </router-link>
+            <router-link to="/candidate/recommendations" class="nav-link">
+              Gợi ý AI
+            </router-link>
+            <router-link to="/candidate/applications" class="nav-link">
+              Đơn ứng tuyển
+            </router-link>
+            <router-link to="/candidate/profile" class="nav-link">
+              Hồ sơ
+            </router-link>
+          </template>
+
+          <!-- Lối tắt cho Doanh nghiệp -->
+          <template v-else-if="authStore.isAuthenticated && authStore.role === 'company'">
+            <router-link to="/company/jobs" class="nav-link nav-highlight">
+              Kênh tuyển dụng
+            </router-link>
+            <router-link to="/company/profile" class="nav-link">
+              Hồ sơ công ty
+            </router-link>
+          </template>
+
+          <!-- Lối tắt cho Quản trị viên -->
+          <template v-else-if="authStore.isAuthenticated && authStore.role === 'admin'">
+            <router-link to="/admin/dashboard" class="nav-link nav-highlight">
+              Trang Quản trị
+            </router-link>
+          </template>
+
           <template v-if="authStore.isAuthenticated">
             <span class="user-greeting">Xin chào, {{ authStore.user?.name }}</span>
             <button @click="handleLogout" class="btn-logout">Đăng xuất</button>
@@ -95,6 +129,19 @@ const handleLogout = async () => {
 
 .nav-link:hover {
   color: #2563eb;
+}
+
+.nav-highlight {
+  color: #2563eb !important;
+  font-weight: 600;
+  background-color: #eff6ff;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.375rem;
+  border: 1px solid #bfdbfe;
+}
+
+.nav-highlight:hover {
+  background-color: #dbeafe;
 }
 
 .btn-register {

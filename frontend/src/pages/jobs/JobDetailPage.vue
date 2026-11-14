@@ -118,8 +118,10 @@
           </div>
 
           <div v-if="!confirmedCvs.length" class="no-cv-alert">
-            Bạn chưa có CV nào ở trạng thái đã xác nhận.
-            <router-link to="/candidate/cvs" class="link-cvs">Tải lên &amp; xác nhận CV ngay →</router-link>
+            <p class="no-cv-msg">Bạn chưa có CV nào ở trạng thái đã xác nhận.</p>
+            <router-link to="/candidate/cvs" class="btn-cta-cv">
+              📄 Tải lên hoặc xác nhận CV ngay →
+            </router-link>
           </div>
 
           <div class="modal-actions">
@@ -475,9 +477,31 @@ onMounted(loadJobDetail);
   background-color: #fffbeb;
   border: 1px solid #fde68a;
   color: #92400e;
-  padding: 0.65rem 0.85rem;
-  border-radius: 0.375rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.no-cv-msg {
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+}
+
+.btn-cta-cv {
+  display: inline-flex;
+  align-items: center;
+  background-color: #2563eb;
+  color: #ffffff !important;
+  font-weight: 600;
   font-size: 0.8125rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.btn-cta-cv:hover {
+  background-color: #1d4ed8;
 }
 
 .link-cvs {
