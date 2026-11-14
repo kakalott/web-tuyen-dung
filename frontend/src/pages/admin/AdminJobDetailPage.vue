@@ -21,7 +21,7 @@
           </div>
 
           <p class="company-sub">
-            Doanh nghiệp: <strong>{{ job.company?.company_name || '—' }}</strong>
+            Doanh nghiệp: <strong>{{ job.company?.company_name || job.company_name || '—' }}</strong>
             <span class="created-at">(Đăng ngày: {{ formatDate(job.created_at) }})</span>
           </p>
 
@@ -147,7 +147,7 @@ const loadJob = async () => {
   error.value = '';
   try {
     const res = await adminApi.getJobDetail(jobId);
-    job.value = res.data?.job || res.data;
+    job.value = res.data?.job || res.data?.data || res.data;
   } catch (err) {
     error.value = err.message || 'Không thể tải chi tiết tin tuyển dụng.';
   } finally {
@@ -159,7 +159,7 @@ const handleApprove = async () => {
   if (!confirm('Xác nhận phê duyệt tin tuyển dụng này?')) return;
   submitting.value = true;
   try {
-    await adminApi.reviewJob(jobId, { review_status: 'approved' });
+    await adminApi.reviewJob(jobId, { decision: 'approve' });
     alert('Đã phê duyệt tin thành công!');
     router.push('/admin/jobs');
   } catch (err) {
@@ -186,13 +186,13 @@ const submitAction = async () => {
   try {
     if (modalType.value === 'reject') {
       await adminApi.reviewJob(jobId, {
-        review_status: 'rejected',
-        rejection_reason: reasonText.value.trim(),
+        decision: 'reject',
+        reason: reasonText.value.trim(),
       });
       alert('Đã từ chối tin tuyển dụng.');
     } else {
       await adminApi.hideJob(jobId, {
-        hidden_reason: reasonText.value.trim(),
+        reason: reasonText.value.trim(),
       });
       alert('Đã ẩn tin tuyển dụng vi phạm.');
     }
