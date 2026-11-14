@@ -141,6 +141,32 @@
           </li>
         </ul>
       </section>
+
+      <!-- Kỹ năng tổng hợp từ các CV đã xác nhận -->
+      <section class="card skills-summary-card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Kỹ năng tổng hợp từ các CV đã xác nhận</h3>
+            <p class="section-desc">Kỹ năng được AI tự động lọc và gắn trực tiếp theo từng CV của bạn</p>
+          </div>
+          <router-link to="/candidate/cvs" class="btn-manage-cv-skills">
+            📄 Quản lý trong CV →
+          </router-link>
+        </div>
+
+        <div v-if="skillsLoading" class="text-sm text-muted">Đang tải danh sách kỹ năng...</div>
+        <div v-else-if="skills.length" class="skills-wrap">
+          <span v-for="skill in skills" :key="skill.id" class="skill-badge">
+            {{ skill.name }}
+          </span>
+        </div>
+        <div v-else class="empty-skills-box">
+          <p class="empty-hint">Chưa có kỹ năng nào được xác nhận từ CV.</p>
+          <router-link to="/candidate/cvs" class="btn-upload-cv-cta">
+            Tải lên &amp; Xác nhận CV ngay
+          </router-link>
+        </div>
+      </section>
     </div>
 
     <!-- ConfirmModal -->
@@ -159,10 +185,13 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { candidateApi } from '@/services/candidateApi';
+import { skillApi } from '@/services/skillApi';
 
 const profile = ref({});
 const educations = ref([]);
 const experiences = ref([]);
+const skills = ref([]);
+const skillsLoading = ref(true);
 const loading = ref(true);
 const saving = ref(false);
 const error = ref('');
@@ -175,6 +204,18 @@ const newExp = ref({ company_name: '', position: '', start_date: '', end_date: '
 
 const showDeleteModal = ref(false);
 let deleteTarget = { type: '', id: null };
+
+const loadSkills = async () => {
+  skillsLoading.value = true;
+  try {
+    const res = await skillApi.getMySkills();
+    skills.value = res.data?.skills || res.data || [];
+  } catch {
+    skills.value = [];
+  } finally {
+    skillsLoading.value = false;
+  }
+};
 
 const loadProfile = async () => {
   loading.value = true;
@@ -191,7 +232,10 @@ const loadProfile = async () => {
   }
 };
 
-onMounted(loadProfile);
+onMounted(() => {
+  loadProfile();
+  loadSkills();
+});
 
 const saveProfile = async () => {
   saving.value = true;
@@ -287,4 +331,13 @@ const confirmDelete = async () => {
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
 .modal-card { background: #fff; padding: 1.5rem; border-radius: 0.5rem; min-width: 320px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
 .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
+.skills-summary-card { background: #fdfefe; }
+.section-desc { font-size: 0.8125rem; color: #64748b; margin: 0.25rem 0 0 0; }
+.btn-manage-cv-skills { display: inline-flex; align-items: center; font-size: 0.8125rem; font-weight: 600; color: #2563eb; text-decoration: none; background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 0.35rem 0.75rem; border-radius: 0.375rem; transition: all 0.15s; }
+.btn-manage-cv-skills:hover { background-color: #dbeafe; }
+.skills-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.skill-badge { display: inline-block; background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.8125rem; font-weight: 500; padding: 0.25rem 0.65rem; border-radius: 9999px; }
+.empty-skills-box { background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 0.375rem; padding: 1.5rem; text-align: center; margin-top: 0.5rem; }
+.btn-upload-cv-cta { display: inline-block; margin-top: 0.5rem; background-color: #2563eb; color: #ffffff !important; font-size: 0.8125rem; font-weight: 500; padding: 0.35rem 0.85rem; border-radius: 0.375rem; text-decoration: none; }
+.btn-upload-cv-cta:hover { background-color: #1d4ed8; }
 </style>

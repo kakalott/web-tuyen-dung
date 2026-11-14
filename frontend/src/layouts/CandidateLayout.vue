@@ -11,14 +11,11 @@
         <router-link to="/candidate/cvs" class="nav-item" active-class="active">
           <span>📄</span> Quản lý CV
         </router-link>
-        <router-link to="/candidate/skills" class="nav-item" active-class="active">
-          <span>🎯</span> Kỹ năng
-        </router-link>
         <router-link to="/candidate/applications" class="nav-item" active-class="active">
           <span>📨</span> Đơn ứng tuyển
         </router-link>
         <router-link to="/candidate/recommendations" class="nav-item" active-class="active">
-          <span>🤖</span> Gợi ý việc làm (AI)
+          <span>🤖</span> AI gợi ý việc làm
         </router-link>
         <router-link to="/candidate/notifications" class="nav-item" active-class="active">
           <span>🔔</span> Thông báo

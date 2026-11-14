@@ -8,18 +8,9 @@
         <nav class="public-nav">
           <router-link to="/jobs" class="nav-link">Việc làm</router-link>
 
-          <!-- Lối tắt điều hướng nhanh cho Ứng viên khi đang ở Public Layout -->
+          <!-- Lối tắt điều hướng cho Ứng viên khi đang ở Public Layout -->
           <template v-if="authStore.isAuthenticated && authStore.role === 'candidate'">
-            <router-link to="/candidate/cvs" class="nav-link nav-highlight">
-              Quản lý CV
-            </router-link>
-            <router-link to="/candidate/recommendations" class="nav-link">
-              Gợi ý AI
-            </router-link>
-            <router-link to="/candidate/applications" class="nav-link">
-              Đơn ứng tuyển
-            </router-link>
-            <router-link to="/candidate/profile" class="nav-link">
+            <router-link to="/candidate/profile" class="nav-link nav-highlight">
               Hồ sơ
             </router-link>
           </template>

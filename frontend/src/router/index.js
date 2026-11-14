@@ -22,7 +22,6 @@ import ForbiddenPage from '@/pages/errors/ForbiddenPage.vue';
 import CandidateProfilePage from '@/pages/candidate/CandidateProfilePage.vue';
 import CandidateCVsPage from '@/pages/candidate/CandidateCVsPage.vue';
 import CVExtractionPage from '@/pages/candidate/CVExtractionPage.vue';
-import CandidateSkillsPage from '@/pages/candidate/CandidateSkillsPage.vue';
 import CandidateApplicationsPage from '@/pages/candidate/CandidateApplicationsPage.vue';
 import RecommendationsPage from '@/pages/candidate/RecommendationsPage.vue';
 import NotificationsPage from '@/pages/candidate/NotificationsPage.vue';
@@ -112,8 +111,7 @@ const routes = [
       },
       {
         path: 'skills',
-        name: 'candidate-skills',
-        component: CandidateSkillsPage,
+        redirect: '/candidate/cvs',
       },
       {
         path: 'applications',

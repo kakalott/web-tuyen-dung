@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\CandidateCV;
+use App\Models\CandidateProfile;
 use App\Models\CVExtraction;
 use App\Models\Skill;
 use App\Models\Application;
@@ -120,6 +121,21 @@ class CVService
             }
 
             $extraction->skills()->sync($syncData);
+
+            // Đồng bộ tự động các kỹ năng đã xác nhận sang candidate_skills của ứng viên (source = 'cv_confirmed')
+            $cv = CandidateCV::find($cvId);
+            if ($cv && ($profile = CandidateProfile::find($cv->candidate_profile_id))) {
+                $existing = $profile->skills()->pluck('skills.id')->all();
+                $toAttach = array_diff($dto['confirmed_skill_ids'], $existing);
+                if (!empty($toAttach)) {
+                    $attachData = [];
+                    foreach ($toAttach as $sid) {
+                        $attachData[$sid] = ['source' => 'cv_confirmed'];
+                    }
+                    $profile->skills()->attach($attachData);
+                }
+            }
+
             return $extraction->load('skills');
         });
     }
