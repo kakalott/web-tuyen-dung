@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ApplyToJobRequest;
 use App\Http\Requests\ListQueryRequest;
 use App\Http\Resources\ApplicationResource;
+use App\Http\Resources\InterviewResource;
 use App\Models\Application;
 use App\Services\ApplicationService;
 use Illuminate\Http\JsonResponse;
@@ -57,6 +58,7 @@ class CandidateApplicationController extends Controller
             'cv_filename'  => $app->cv?->original_filename ?? $app->candidateCV?->original_filename,
             'status'       => $app->status,
             'applied_at'   => $app->applied_at?->toIso8601String(),
+            'interviews'   => InterviewResource::collection($app->interviews)->resolve($request),
         ])->values();
 
         return response()->json([
@@ -85,7 +87,7 @@ class CandidateApplicationController extends Controller
 
         return response()->json([
             'data' => [
-                'application' => collect($resource)->except(['interviews'])->all(),
+                'application' => $resource,
                 'interviews'  => $resource['interviews'] ?? [],
             ],
         ]);

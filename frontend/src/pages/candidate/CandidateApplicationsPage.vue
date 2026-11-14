@@ -38,6 +38,24 @@
           <div class="app-meta">
             <span class="text-muted text-sm">Thời gian nộp: {{ formatDate(app.applied_at) }}</span>
           </div>
+
+          <!-- Thông tin các buổi phỏng vấn (BR-INT-01..05) -->
+          <div v-if="app.interviews && app.interviews.length" class="interviews-panel">
+            <div class="interviews-title">📅 Thông tin buổi phỏng vấn</div>
+            <div
+              v-for="iv in app.interviews"
+              :key="iv.id"
+              class="interview-item"
+            >
+              <div class="iv-top">
+                <span class="iv-time"><strong>Thời gian:</strong> {{ formatDatetime(iv.scheduled_at) }}</span>
+                <StatusBadge :status="iv.status" domain="interview" />
+              </div>
+              <div class="iv-row"><strong>Địa điểm / Hình thức:</strong> {{ iv.location_or_mode }}</div>
+              <div v-if="iv.notes" class="iv-row text-notes"><strong>Ghi chú:</strong> {{ iv.notes }}</div>
+              <div v-if="iv.cancel_reason" class="iv-row text-danger"><strong>Lý do hủy:</strong> {{ iv.cancel_reason }}</div>
+            </div>
+          </div>
         </div>
 
         <div class="app-actions">
@@ -78,6 +96,7 @@ import { ref, onMounted } from 'vue';
 import { applicationApi } from '@/services/applicationApi';
 import { apiClient } from '@/services/apiClient';
 import { cvApi } from '@/services/cvApi';
+import StatusBadge from '@/components/common/StatusBadge.vue';
 
 const applications = ref([]);
 const loading = ref(true);
@@ -127,6 +146,7 @@ const statusBadge = (status) => ({
 });
 
 const formatDate = (d) => (d ? new Date(d).toLocaleString('vi-VN') : '');
+const formatDatetime = (d) => (d ? new Date(d).toLocaleString('vi-VN') : '');
 
 const handleViewSubmittedCv = async (cvId) => {
   try {
@@ -176,6 +196,13 @@ const confirmWithdraw = async () => {
 .cv-label { color: #64748b; font-weight: 500; }
 .btn-view-cv { background: none; border: none; color: #2563eb; font-weight: 600; font-size: 0.8125rem; cursor: pointer; padding: 0; text-decoration: underline; display: inline-flex; align-items: center; gap: 0.25rem; }
 .btn-view-cv:hover { color: #1d4ed8; }
+.interviews-panel { margin-top: 0.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.interviews-title { font-size: 0.8125rem; font-weight: 700; color: #1e293b; }
+.interview-item { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.25rem; padding: 0.5rem 0.65rem; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8125rem; }
+.iv-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.iv-time { color: #0f172a; }
+.iv-row { color: #334155; line-height: 1.35; }
+.text-notes { color: #64748b; font-style: italic; }
 .app-meta { display: flex; gap: 0.75rem; align-items: center; margin-top: 0.25rem; }
 .app-actions { flex-shrink: 0; display: flex; align-items: center; }
 .badge { padding: 0.125rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }

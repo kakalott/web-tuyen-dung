@@ -125,8 +125,11 @@ class ApplicationService
         $candidateProfileId = $actor->candidateProfile->id;
         $pageSize = (int) ($filters['page_size'] ?? 15);
 
-        $query = Application::with(['job.company', 'cv'])
-            ->where('candidate_profile_id', $candidateProfileId);
+        $query = Application::with([
+            'job.company',
+            'cv',
+            'interviews' => fn ($q) => $q->orderByDesc('scheduled_at')->orderByDesc('id'),
+        ])->where('candidate_profile_id', $candidateProfileId);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -146,7 +149,7 @@ class ApplicationService
             'job.company',
             'cv',
             'statusHistories' => fn ($q) => $q->orderBy('changed_at')->orderBy('id'),
-            'interviews'      => fn ($q) => $q->orderBy('scheduled_at')->orderBy('id'),
+            'interviews'      => fn ($q) => $q->orderByDesc('scheduled_at')->orderByDesc('id'),
         ]);
     }
 
@@ -350,10 +353,21 @@ class ApplicationService
 
             // 6. Tạo notification website cho ứng viên trong cùng transaction
             if ($application->candidateProfile && $application->candidateProfile->user_id) {
+                $statusText = match ($next) {
+                    DomainStates::APP_PASSED    => 'Đạt tuyển dụng',
+                    DomainStates::APP_REJECTED  => 'Không đạt',
+                    DomainStates::APP_REVIEWING => 'Đang xem xét',
+                    DomainStates::APP_INTERVIEW => 'Phỏng vấn',
+                    default                     => $next,
+                };
+
+                $content = "Kết quả ứng tuyển vị trí \"{$application->job->title}\": {$statusText}."
+                    . ($note ? " Ghi chú: {$note}" : '');
+
                 Notification::create([
                     'user_id'      => $application->candidateProfile->user_id,
                     'event_type'   => 'application.status_changed',
-                    'content'      => "Hồ sơ ứng tuyển vị trí \"{$application->job->title}\" đã chuyển sang trạng thái: {$next}.",
+                    'content'      => $content,
                     'related_type' => 'application',
                     'related_id'   => $application->id,
                     'created_at'   => $now,

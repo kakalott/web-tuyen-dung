@@ -24,6 +24,7 @@ const statusLabel = computed(() => {
     pending: 'Chờ xử lý',
     reviewing: 'Đang xem xét',
     interview: 'Phỏng vấn',
+    passed: 'Đạt tuyển dụng',
     offered: 'Đã mời việc',
     hired: 'Đã tuyển',
     withdrawn: 'Đã rút đơn',
@@ -53,7 +54,7 @@ const statusLabel = computed(() => {
 
 const badgeClass = computed(() => {
   const s = props.status;
-  if (['verified', 'approved', 'active', 'hired', 'offered', 'completed'].includes(s)) {
+  if (['verified', 'approved', 'active', 'hired', 'offered', 'completed', 'passed'].includes(s)) {
     return 'badge-success';
   }
   if (['rejected', 'hidden', 'no_show', 'cancelled'].includes(s)) {
