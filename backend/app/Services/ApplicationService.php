@@ -325,6 +325,9 @@ class ApplicationService
 
             // 3. Đối chiếu ma trận chuyển tiếp trạng thái (BR-APP-06..09)
             if (!DomainStates::canCompanyTransitionApplication($application->status, $next, $hasActiveSchedule)) {
+                if ($application->status === $next) {
+                    return $application->fresh(['candidateProfile.user', 'job', 'statusHistories', 'interviews']);
+                }
                 throw new HttpException(409, "Không thể chuyển trạng thái hồ sơ từ '{$application->status}' sang '{$next}'.");
             }
 

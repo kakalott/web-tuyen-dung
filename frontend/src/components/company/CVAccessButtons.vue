@@ -22,6 +22,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['downloaded']);
+
 const downloading = ref(false);
 const error = ref('');
 
@@ -30,6 +32,7 @@ const handleDownload = async () => {
   error.value = '';
   try {
     await applicationApi.downloadCv(props.applicationId);
+    emit('downloaded');
   } catch (err) {
     error.value = err.message || 'Không thể tải file CV.';
   } finally {

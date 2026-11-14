@@ -24,4 +24,8 @@ export const applicationApi = {
   downloadCv: (id) => {
     return apiClient.download(`/company/applications/${id}/cv`, `application-${id}-cv.pdf`);
   },
+
+  downloadCompanyApplicationCv: (id) => {
+    return apiClient.downloadBlob(`/company/applications/${id}/cv`);
+  },
 };

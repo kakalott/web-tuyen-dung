@@ -234,4 +234,24 @@ class AuthorizationTest extends TestCase
         $this->getJson("/api/v1/company/applications/{$appId}/cv")
             ->assertStatus(401);
     }
+
+    public function test_downloading_pending_application_cv_automatically_moves_status_to_reviewing(): void
+    {
+        $ctx = $this->seedScenario();
+        $app = $ctx['application'];
+        $this->assertEquals('pending', $app->status);
+
+        $response = $this->actingAs($ctx['companyAUser'], 'sanctum')
+            ->get("/api/v1/company/applications/{$app->id}/cv");
+
+        $response->assertStatus(200);
+
+        $this->assertEquals('reviewing', $app->fresh()->status);
+        $this->assertDatabaseHas('application_status_histories', [
+            'application_id' => $app->id,
+            'from_status'    => 'pending',
+            'to_status'      => 'reviewing',
+            'note'           => 'Doanh nghiệp đã xem CV ứng viên',
+        ]);
+    }
 }

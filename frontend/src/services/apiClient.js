@@ -117,4 +117,32 @@ export const apiClient = {
     setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
     return blobUrl;
   },
+
+  async downloadBlob(endpoint) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/pdf, application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+
+      const errData = await response.json().catch(() => null);
+      throw {
+        status: response.status,
+        request_id: errData?.request_id || null,
+        ...(errData?.error || {
+          code: 'DOWNLOAD_FAILED',
+          message: 'Không thể tải tệp CV hoặc bạn không có quyền truy cập.',
+        }),
+      };
+    }
+
+    return await response.blob();
+  },
 };

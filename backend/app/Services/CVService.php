@@ -10,6 +10,7 @@ use App\Models\Skill;
 use App\Models\Application;
 use App\Models\Company;
 use App\Clients\PythonAIClient;
+use App\Support\DomainStates;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CVService
 {
-    public function __construct(private PythonAIClient $aiClient) {}
+    public function __construct(
+        private PythonAIClient $aiClient,
+        private ApplicationService $applicationService
+    ) {}
 
     public function upload(User $actor, UploadedFile $pdf): CandidateCV
     {
@@ -270,6 +274,16 @@ class CVService
             'cv_id'          => $cv->id,
             'accessed_at'    => now()->toIso8601String(),
         ]);
+
+        // Bước 6: Tự động chuyển pending -> reviewing khi doanh nghiệp xem CV ứng viên (BR-APP-03..09)
+        if ($application->status === DomainStates::APP_PENDING) {
+            $this->applicationService->changeStatus(
+                $actor,
+                $application->id,
+                DomainStates::APP_REVIEWING,
+                'Doanh nghiệp đã xem CV ứng viên'
+            );
+        }
 
         $safeFilename = str_replace('"', '', $cv->original_filename ?: 'candidate-cv.pdf');
 
