@@ -107,6 +107,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { jobApi } from '@/services/jobApi';
+import { companyApi } from '@/services/companyApi';
 import { useAuthStore } from '@/stores/authStore';
 import StatusBadge from '@/components/common/StatusBadge.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
@@ -118,11 +119,33 @@ const jobs = ref([]);
 const loading = ref(true);
 const error = ref('');
 const filters = ref({ review_status: '', publication_status: '' });
+const companyProfile = ref(null);
 
-// Kiểm tra quyền theo auth context
+// Kiểm tra quyền xác minh (linh hoạt giữa profile tải về và auth context)
 const isVerified = computed(() => {
-  return authStore.user?.company?.verification_status === 'verified';
+  return (
+    companyProfile.value?.verification_status === 'verified' ||
+    authStore.user?.company?.verification_status === 'verified'
+  );
 });
+
+const loadCompanyStatus = async () => {
+  try {
+    const res = await companyApi.getProfile();
+    const data = res.data?.company || res.data;
+    if (data) {
+      companyProfile.value = data;
+      if (authStore.user) {
+        authStore.user.company = {
+          ...authStore.user.company,
+          ...data,
+        };
+      }
+    }
+  } catch (err) {
+    // Không chặn luồng nếu tải profile lỗi nhẹ
+  }
+};
 
 const loadJobs = async () => {
   loading.value = true;
@@ -151,7 +174,9 @@ const formatDate = (dateString) => {
   return dateString ? new Date(dateString).toLocaleDateString('vi-VN') : 'Không thời hạn';
 };
 
-onMounted(loadJobs);
+onMounted(async () => {
+  await Promise.all([loadCompanyStatus(), loadJobs()]);
+});
 </script>
 
 <style scoped>

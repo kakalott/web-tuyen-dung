@@ -152,6 +152,7 @@ const routes = [
       },
       {
         path: 'jobs/new',
+        alias: 'jobs/create',
         name: 'company-job-create',
         component: CompanyJobEditorPage,
       },

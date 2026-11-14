@@ -40,15 +40,36 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
+import { companyApi } from '@/services/companyApi';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const localCompany = ref(null);
 
 const verificationStatus = computed(() => {
-  return authStore.user?.company?.verification_status || 'unverified';
+  return (
+    localCompany.value?.verification_status ||
+    authStore.user?.company?.verification_status ||
+    'unverified'
+  );
+});
+
+onMounted(async () => {
+  try {
+    const res = await companyApi.getProfile();
+    const comp = res.data?.company || res.data;
+    if (comp) {
+      localCompany.value = comp;
+      if (authStore.user) {
+        authStore.user.company = { ...authStore.user.company, ...comp };
+      }
+    }
+  } catch {
+    // ignore
+  }
 });
 
 const handleLogout = async () => {
