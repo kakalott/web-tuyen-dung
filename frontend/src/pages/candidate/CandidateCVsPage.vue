@@ -61,9 +61,17 @@
           <span v-else-if="cv.parse_status === 'processing'" class="text-muted text-sm">
             Đang xử lý...
           </span>
-          <span v-else-if="cv.parse_status === 'failed'" class="text-danger text-sm">
-            Trích xuất lỗi
-          </span>
+          <template v-else-if="cv.parse_status === 'failed'">
+            <span class="text-danger text-sm mr-2">Trích xuất lỗi</span>
+            <button
+              @click="handleRetry(cv.id)"
+              :disabled="retryingId === cv.id"
+              class="btn-retry-sm"
+              title="Thử trích xuất lại với AI"
+            >
+              {{ retryingId === cv.id ? 'Đang xử lý...' : '🔄 Thử lại' }}
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -81,6 +89,7 @@ const selectedFile = ref(null);
 const uploading = ref(false);
 const uploadError = ref('');
 const fileInput = ref(null);
+const retryingId = ref(null);
 
 const loadCvs = async () => {
   loading.value = true;
@@ -136,6 +145,19 @@ const handleDownload = async (cvId) => {
   }
 };
 
+const handleRetry = async (cvId) => {
+  retryingId.value = cvId;
+  uploadError.value = '';
+  try {
+    await cvApi.retryExtraction(cvId);
+    await loadCvs();
+  } catch (err) {
+    alert(err.message || 'Thử lại trích xuất thất bại. Vui lòng kiểm tra Python AI Service đã khởi động.');
+  } finally {
+    retryingId.value = null;
+  }
+};
+
 const badgeClass = (status) => ({
   'badge-info': status === 'uploaded' || status === 'processing',
   'badge-success': status === 'processed',
@@ -164,6 +186,9 @@ const formatDate = (d) => (d ? new Date(d).toLocaleDateString('vi-VN') : '');
 .btn-outline-sm { background: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 0.25rem 0.6rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; }
 .btn-outline-sm:hover { background: #f1f5f9; }
 .mr-2 { margin-right: 0.5rem; }
+.btn-retry-sm { background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 0.25rem 0.6rem; border-radius: 0.375rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-retry-sm:hover:not(:disabled) { background-color: #fee2e2; }
+.btn-retry-sm:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-link { color: #2563eb; text-decoration: none; font-size: 0.875rem; font-weight: 500; }
 .btn-link:hover { text-decoration: underline; }
 .cv-list { display: flex; flex-direction: column; gap: 0.75rem; }
