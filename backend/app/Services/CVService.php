@@ -95,8 +95,78 @@ class CVService
                 }
             });
         } catch (\Throwable $e) {
+            Log::error('CV_EXTRACTION_FAILED', [
+                'cv_id' => $cv->id,
+                'error' => $e->getMessage()
+            ]);
             $cv->update(['parse_status' => 'failed']);
         }
+    }
+
+    public function retryExtraction(User $actor, int $cvId): CandidateCV
+    {
+        $cv = CandidateCV::where('id', $cvId)->firstOrFail();
+        $disk = Storage::disk('private_cvs');
+        if (!$disk->exists($cv->storage_key)) {
+            throw new HttpException(404, 'Không tìm thấy file CV trong hệ thống lưu trữ.');
+        }
+
+        $fullPath = $disk->path($cv->storage_key);
+
+        $catalog = Skill::with('aliases')->where('is_active', 1)->get()->map(fn($s) => [
+            'skill_id'       => $s->id,
+            'canonical_name' => $s->name,
+            'aliases'        => $s->aliases->pluck('alias')->toArray()
+        ])->toArray();
+
+        try {
+            $result = $this->aiClient->extractCv($fullPath, $catalog, $cv->original_filename);
+
+            DB::transaction(function () use ($cv, $result) {
+                if ($result['parser_status'] === 'success') {
+                    $cv->update(['parse_status' => 'processed']);
+                    
+                    $extraction = CVExtraction::create([
+                        'cv_id'             => $cv->id,
+                        'extraction_status' => 'success',
+                        'review_status'     => 'draft',
+                        'extracted_text'    => $result['extracted_text'] ?? null,
+                        'normalized_text'   => $result['normalized_text'] ?? null,
+                        'warnings'          => $result['warnings'] ?? [],
+                        'extracted_at'      => now(),
+                    ]);
+
+                    $skillsToAttach = [];
+                    foreach ($result['detected_skills'] ?? [] as $ds) {
+                        $skillsToAttach[$ds['skill_id']] = [
+                            'source'        => 'detected',
+                            'review_status' => 'detected',
+                        ];
+                    }
+                    if (!empty($skillsToAttach)) {
+                        $extraction->skills()->attach($skillsToAttach);
+                    }
+                } else {
+                    $cv->update(['parse_status' => 'failed']);
+                    CVExtraction::create([
+                        'cv_id'             => $cv->id,
+                        'extraction_status' => 'failed',
+                        'review_status'     => 'draft',
+                        'warnings'          => $result['warnings'] ?? [],
+                        'extracted_at'      => now(),
+                    ]);
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('CV_RETRY_EXTRACTION_FAILED', [
+                'cv_id' => $cv->id,
+                'error' => $e->getMessage()
+            ]);
+            $cv->update(['parse_status' => 'failed']);
+            throw $e;
+        }
+
+        return $cv->fresh();
     }
 
     public function confirm(User $actor, int $cvId, array $dto): CVExtraction

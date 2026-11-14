@@ -70,11 +70,12 @@ class CVExtractionController extends Controller
         $cv = CandidateCV::findOrFail($cvId);
         Gate::authorize('update', $cv);
 
-        // Có thể thực hiện đọc lại file từ storage_key và gọi lại extract
+        $updatedCv = $this->cvService->retryExtraction($request->user(), $cvId);
+
         return response()->json([
             'data' => [
                 'retried' => true,
-                'parse_status' => $cv->parse_status,
+                'parse_status' => $updatedCv->parse_status,
             ]
         ]);
     }

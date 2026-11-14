@@ -39,16 +39,24 @@ class PythonAIClient
         }
     }
 
-    public function extractCv(UploadedFile $file, array $catalog): array
+    public function extractCv(UploadedFile|string $file, array $catalog, ?string $filename = null): array
     {
         $url = $this->baseUrl . '/internal/v1/cv/extract';
+
+        if ($file instanceof UploadedFile) {
+            $contents = file_get_contents($file->getRealPath());
+            $name = $filename ?? $file->getClientOriginalName();
+        } else {
+            $contents = file_get_contents($file);
+            $name = $filename ?? basename($file);
+        }
 
         try {
             $response = Http::timeout($this->timeout)
                 ->withHeaders([
                     'X-Internal-Token' => $this->token ?? ''
                 ])->attach(
-                    'file', file_get_contents($file->getRealPath()), $file->getClientOriginalName()
+                    'file', $contents, $name
                 )->post($url, [
                     'skill_catalog' => json_encode($catalog)
                 ]);
