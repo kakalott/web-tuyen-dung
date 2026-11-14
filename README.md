@@ -8,7 +8,7 @@ Hệ thống tuyển dụng hiện đại tích hợp phân tích CV tự độn
 
 * **`frontend/` (Cổng 5173):** Ứng dụng Web Client SPA xây dựng bằng **Vue 3 (Composition API) + Vite + Tailwind CSS + Pinia**. Đảm nhận giao diện responsive cho cả 3 phân hệ người dùng (Candidate, Company, Admin), xử lý upload multipart, stream binary PDF an toàn và reactive notifications.
 * **`backend/` (Cổng 8000):** Trung tâm xử lý nghiệp vụ lõi (Business Core) xây dựng bằng **Laravel 11 (PHP 8.2+)**. Quản lý dữ liệu quan hệ MySQL, xác thực trạng thái Sanctum SPA, phân quyền RBAC, kiểm duyệt tin tuyển dụng, workflow đơn ứng tuyển & lịch phỏng vấn, và bảo vệ đĩa lưu trữ CV riêng tư (`private_cvs`).
-* **`ai-service/` (Cổng 8001):** Microservice trí tuệ nhân tạo độc lập viết bằng **Python FastAPI + Sentence-Transformers (`all-MiniLM-L6-v2`) + PyMuPDF**. Chịu trách nhiệm trích xuất văn bản từ CV PDF, nhận diện kỹ năng theo danh mục chuẩn (Skill NER / Catalog Matching), và tính toán độ tương đồng ngữ nghĩa (Cosine Semantic Similarity + TF-IDF Baseline + Skill Coverage).
+* **`ai-service/` (Cổng 8001):** Microservice trí tuệ nhân tạo độc lập viết bằng **Python FastAPI + Sentence-Transformers (`all-MiniLM-L6-v2`) + pypdf**. Chịu trách nhiệm trích xuất văn bản từ CV PDF, nhận diện kỹ năng theo danh mục chuẩn (Skill NER / Catalog Matching), và tính toán độ tương đồng ngữ nghĩa (Cosine Semantic Similarity + TF-IDF Baseline + Skill Coverage).
 * **`database/`:** Bản vẽ thiết kế cơ sở dữ liệu quan hệ (ERD 23 bảng lõi) và kịch bản khởi tạo.
 * **`docs/`:** Tài liệu kỹ thuật chi tiết: `api-contract.md` (68 endpoints), `decision-register.md` (14 Architecture Decision Records `D-01..D-14`), và `ai-evaluation.md`.
 
@@ -36,12 +36,36 @@ php artisan migrate:fresh --seed
 Mở **3 cửa sổ Terminal** riêng biệt để chạy đồng thời các dịch vụ:
 
 #### 🔹 Terminal 1 — Python AI Service (Cổng 8001)
+
+**Cách 1: Chạy trực tiếp qua Python trong môi trường ảo (Khuyên dùng trên Windows):**
 ```bash
 cd ai-service
-# Kích hoạt môi trường ảo (nếu chưa kích hoạt): .\venv\Scripts\activate
-uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+.\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
 ```
-*(Chờ thông báo nạp mô hình Sentence-Transformers thành công và service sẵn sàng tại `http://127.0.0.1:8001`)*.
+
+**Cách 2: Kích hoạt môi trường ảo (`venv`) trước khi chạy:**
+* **Windows (PowerShell):**
+  ```powershell
+  cd ai-service
+  .\venv\Scripts\Activate.ps1
+  uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+  ```
+* **Windows (Command Prompt - CMD):**
+  ```cmd
+  cd ai-service
+  venv\Scripts\activate.bat
+  uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+  ```
+* **Linux / macOS:**
+  ```bash
+  cd ai-service
+  source venv/bin/activate
+  uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+  ```
+
+> [!NOTE]
+> * Chờ thông báo nạp mô hình Sentence-Transformers thành công và service sẵn sàng tại `http://127.0.0.1:8001`.
+> * Kiểm tra nhanh trạng thái AI Service: truy cập `http://127.0.0.1:8001/internal/v1/health` trên trình duyệt (kết quả trả về `{"status":"ok"}`).
 
 #### 🔹 Terminal 2 — Laravel Backend API (Cổng 8000)
 ```bash
@@ -147,6 +171,7 @@ Toàn bộ hệ thống đã được kiểm thử tự động toàn diện và
 ### 1. Kiểm thử Python AI Microservice (4 files `pytest`)
 ```bash
 cd ai-service
+# Trên Windows có thể chạy trực tiếp: .\venv\Scripts\pytest -v
 pytest -v
 ```
 > **Kết quả:** `13 passed in 1.90s` (Bao phủ: `test_auth.py`, `test_extraction.py`, `test_matching.py`, `test_contracts.py`).
@@ -156,7 +181,7 @@ pytest -v
 cd backend
 php artisan test
 ```
-> **Kết quả:** `62 passed (585 assertions)` (Bao phủ toàn bộ 11 nhóm nghiệp vụ: Auth, Candidate, CV, Company, Job, Application, Interview, Matching, Notification, AdminCatalog, Dashboard, Authorization IDOR, và FullSystemE2E).
+> **Kết quả:** `64 passed (594 assertions)` (Bao phủ toàn bộ các nhóm nghiệp vụ: Auth, Candidate, CV, Company, Job, Application, Interview, Matching, Notification, AdminCatalog, Dashboard, Authorization IDOR, và FullSystemE2E).
 
 ### 3. Kiểm tra Biên dịch Frontend Production
 ```bash
